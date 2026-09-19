@@ -56,7 +56,7 @@ tests/                        runtime-script tests (bash, run in a container via
 ## Kevin's manual steps
 
 1. ~~Create the GitHub repo `khowe085/bazzite-dx`~~ Done 2026-09-19 (public). Nothing pushed yet.
-2. `COSIGN_PASSWORD="" cosign generate-key-pair`, add `cosign.key` as repo secret `SIGNING_SECRET`, commit `cosign.pub`.
+2. ~~Generate the cosign key pair, add `cosign.key` as repo secret `SIGNING_SECRET`, commit `cosign.pub`~~ Done 2026-09-19 (empty password, as the workflow expects). `cosign.key` stays local and gitignored.
 3. Push; first build publishes `ghcr.io/khowe085/bazzite-dx:latest`.
 4. On the machine: `sudo bootc switch ghcr.io/khowe085/bazzite-dx:latest`, reboot.
 5. Run the EmuDeck wizard once (choices listed in README); enter the Patreon token there.
