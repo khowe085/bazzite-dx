@@ -1,0 +1,19 @@
+# Flatpaks that are part of this image. custom-flatpak-preinstall.service installs them from Flathub
+# at boot; an app the user uninstalls stays uninstalled (see flatpak-preinstall(1)).
+
+[Flatpak Preinstall md.obsidian.Obsidian]
+Branch=stable
+
+[Flatpak Preinstall com.spotify.Client]
+Branch=stable
+
+[Flatpak Preinstall com.obsproject.Studio]
+Branch=stable
+
+[Flatpak Preinstall com.discordapp.Discord]
+Branch=stable
+
+# Beta, from the flathub-beta remote: the 1Password link needs Firefox 157's native-messaging
+# proxy client. Switch to Branch=stable once Flathub's stable Firefox is 157 or newer.
+[Flatpak Preinstall org.mozilla.firefox]
+Branch=beta

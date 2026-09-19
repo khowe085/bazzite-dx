@@ -1,0 +1,4 @@
+# 1Password for Linux custom browser allowlist: one binary name per line, '#' starts a comment.
+# The Firefox flatpak reaches 1Password-BrowserSupport through xdg-native-messaging-proxy, so the
+# proxy is the process 1Password sees as the "browser".
+xdg-native-messaging-proxy

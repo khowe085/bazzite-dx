@@ -1,0 +1,15 @@
+[Unit]
+Description=Install the flatpaks listed in /usr/share/flatpak/preinstall.d
+Wants=network-online.target
+# Bazzite's manager adds the Flathub remote on first boot; run after it.
+After=network-online.target bazzite-flatpak-manager.service
+ConditionPathExists=/usr/share/flatpak/preinstall.d
+
+[Service]
+Type=oneshot
+# Firefox beta lives on Flathub's beta remote; add it the way Bazzite's manager adds Flathub.
+ExecStartPre=/usr/bin/flatpak remote-add --system --if-not-exists flathub-beta /etc/flatpak/remotes.d/flathub-beta.flatpakrepo
+ExecStart=/usr/bin/flatpak preinstall --system -y
+
+[Install]
+WantedBy=multi-user.target
