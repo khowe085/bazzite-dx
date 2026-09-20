@@ -1,0 +1,12 @@
+[Unit]
+Description=Set up btrfs deduplication (beesd) for the filesystem behind /var/home once
+RequiresMountsFor=/var/home
+
+[Service]
+Type=oneshot
+# The script keeps its "done" stamp here (STATE_DIRECTORY); delete it to have the setup run again.
+StateDirectory=custom-home-dedup
+ExecStart=/usr/libexec/custom-home-dedup-setup
+
+[Install]
+WantedBy=multi-user.target

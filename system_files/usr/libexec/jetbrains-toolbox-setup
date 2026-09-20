@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+# Installs JetBrains Toolbox for the calling user with Homebrew, the way the Bazzite Portal's
+# "JetBrains Toolbox" entry does. Started detached by user-setup.hooks.d/35-portal-tweaks.sh at
+# every login until it has succeeded once; uninstalling it later (brew uninstall --cask) sticks.
+set -euo pipefail
+
+BREW="${JETBRAINS_TOOLBOX_BREW:-/home/linuxbrew/.linuxbrew/bin/brew}"
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/portal-tweaks/jetbrains-toolbox"
+
+if [[ -e "$STAMP" ]]; then
+	exit 0
+fi
+if [[ ! -x "$BREW" ]]; then
+	echo "Homebrew is not at $BREW yet (brew-setup.service unpacks it); retrying at the next login" >&2
+	exit 1
+fi
+# Assigned first: `eval "$(...)"` would swallow a failing shellenv.
+brew_env="$("$BREW" shellenv)"
+eval "$brew_env"
+brew trust ublue-os/tap
+brew tap ublue-os/tap
+brew install --cask jetbrains-toolbox-linux
+mkdir -p "$(dirname "$STAMP")"
+touch "$STAMP"

@@ -1,0 +1,3 @@
+# The kernel arguments `ujust setup-virtualization virt-on` adds with rpm-ostree kargs: guests that
+# touch model-specific registers KVM does not emulate (Windows, macOS) keep running, quietly.
+kargs = ["kvm.ignore_msrs=1", "kvm.report_ignored_msrs=0"]
