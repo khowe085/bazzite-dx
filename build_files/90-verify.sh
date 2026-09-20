@@ -71,6 +71,25 @@ check "ublue-user-setup.service is enabled for all users" systemctl --global is-
 echo "== Base units this image orders itself after"
 check "bazzite-flatpak-manager.service still exists in the base" test -f /usr/lib/systemd/system/bazzite-flatpak-manager.service
 
+echo "== KDE defaults"
+LNF=org.fedoraproject.fedoradark.desktop
+UPDATES_DIR=/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates
+POTD_SCRIPT="$UPDATES_DIR/picture-of-the-day-wallpaper.js"
+check "Fedora Dark is the default global theme" grep -qx "LookAndFeelPackage=$LNF" /etc/xdg/kdeglobals
+check "kdeglobals names one global theme only" test "$(grep -c '^LookAndFeelPackage=' /etc/xdg/kdeglobals)" = 1
+check "the base ships that theme" test -f "/usr/share/plasma/look-and-feel/$LNF/metadata.json"
+check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=false' /etc/xdg/kdeglobals
+check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
+check "in the directory the base uses for its own Plasma update script" test -f "$UPDATES_DIR/bazzite-pins.js"
+check "the script selects the Picture of the Day wallpaper" grep -q 'wallpaperPlugin = "org.kde.potd"' "$POTD_SCRIPT"
+check "with the Astronomy (NASA) provider" grep -q 'writeConfig("Provider", "apod")' "$POTD_SCRIPT"
+check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.potd/metadata.json
+check "and that provider" test -f /usr/lib64/qt6/plugins/potd/plasma_potd_apodprovider.so
+# Read back with KDE's own parser: KWin's Touchpad group covers touchpads, Pointer the other pointing devices.
+for type in Touchpad Pointer; do
+	check "natural scrolling is the default for $type devices" test "$(kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$type" --key NaturalScroll)" = true
+done
+
 echo "== Tailscale"
 check "tailscaled enabled" systemctl is-enabled tailscaled.service
 
