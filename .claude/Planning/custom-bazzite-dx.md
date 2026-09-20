@@ -15,7 +15,7 @@ Written 2026-09-11. Decisions marked **(K)** were confirmed by Kevin; **(open)**
 | EmuDeck | `ujust get-emudeck` is GUI-driven (downloads, then hands the file to Gear Lever), so the first-login hook does its non-interactive equivalent: download the latest EmuDeck AppImage to `~/Applications` + desktop entry. Wizard choices (High integration = Steam ROM Manager, Cloud Sync, Bezels, Autosave, classic 4:3 ARs, Patreon token) cannot be pre-seeded — state lives in Electron localStorage — so they are documented in the README. | **(K)** run Bazzite's recipe; token stays out of image |
 | Eden | Fetch latest `Eden-Linux-<ver>-amd64-clang-pgo.AppImage` from git.eden-emu.dev at build into `/usr/lib/eden`; hook places it at `~/Applications/Eden.AppImage` (the exact path EmuDeck's `emuDeckEden.sh` expects, since EmuDeck doesn't download Eden). Replaced when the image carries a newer version than the hook last placed; a user-placed copy (no stamp) is left alone. | variant **(open)** |
 | Flatpaks | Obsidian, Spotify, OBS Studio, Discord (official client, `com.discordapp.Discord`) and Firefox beta via `/usr/share/flatpak/preinstall.d/custom-apps.preinstall` + `custom-flatpak-preinstall.service` (`flatpak preinstall -y` at boot; Fedora ships the command but no unit). bazzite-dx's `/etc/ublue-os/system_flatpaks` has no consumer in the base image, so it cannot be relied on for rebased machines. | **(K)** Spotify/Obsidian/OBS; Kevin chose the official Discord client over Vesktop (2026-09-19) |
-| Claude Desktop | Not included (assessment only): official Debian-only beta, plain `/usr/lib/claude-desktop` Electron payload, ~40-line script if wanted. | **(open)** |
+| Claude Desktop | **2026-09-19 (K): in an Ubuntu distrobox instead of converting the `.deb`.** Manifest `/usr/share/claude-distrobox/claude.ini`, also appended to `/etc/distrobox/apps.ini` (ublue's manifest for `ujust setup-distrobox-app`): image `ghcr.io/ublue-os/ubuntu-toolbox` (Ubuntu 26.04), init hook = `/run/host/usr/libexec/claude-distrobox-init` (Anthropic's apt repo, key fingerprint pinned, `apt install claude-desktop`, skipped once dpkg reports the package installed), app exported to the menu. The first-login hook only launches `/usr/libexec/claude-distrobox-setup` via `systemd-run --user`, because ublue-user-setup runs hooks sequentially; the setup reads the `/usr` manifest (a locally edited `/etc` file survives image updates, and assemble exits 0 when the section is missing), verifies the box exists instead of trusting assemble's exit status, and finishes a half-made box rather than deleting it. | **(K)** automatic at first login |
 | Tailscale | Already in base (RPM 1.102.3). `tailscaled` enabled at build = what `ujust tailscale enable` does. | **(K)** |
 | 1Password CLI | Not included. | **(open)** |
 
@@ -32,6 +32,7 @@ build_files/30-firefox-native-messaging.sh   installs xdg-native-messaging-proxy
 build_files/40-eden.sh        downloads the Eden AppImage into /usr/lib/eden + VERSION stamp
 build_files/50-tailscale.sh   enables tailscaled
 build_files/60-flatpaks.sh    enables custom-flatpak-preinstall.service
+build_files/70-claude-distrobox.sh   appends /usr/share/claude-distrobox/claude.ini to /etc/distrobox/apps.ini
 build_files/90-verify.sh      image test (see Testing)
 system_files/etc/1password/custom_allowed_browsers
 system_files/etc/flatpak/remotes.d/flathub-beta.flatpakrepo   Flathub's official beta remote file, verbatim
@@ -40,15 +41,20 @@ system_files/usr/lib/tmpfiles.d/onepassword.conf
 system_files/usr/lib/systemd/system/onepassword-firefox-flatpak.service
 system_files/usr/lib/systemd/system/custom-flatpak-preinstall.service
 system_files/usr/libexec/onepassword-firefox-flatpak-setup
+system_files/usr/libexec/claude-distrobox-init   runs inside the claude box as its init hook
+system_files/usr/libexec/claude-distrobox-setup  per-user creation of the box, started detached by the hook
+system_files/usr/share/claude-distrobox/claude.ini   the box's manifest
 system_files/usr/share/ublue-os/firefox-config/zz-onepassword-native-messaging.js
 system_files/usr/share/flatpak/preinstall.d/custom-apps.preinstall
 system_files/usr/share/ublue-os/user-setup.hooks.d/30-emudeck.sh
+system_files/usr/share/ublue-os/user-setup.hooks.d/40-claude-distrobox.sh
 tests/                        runtime-script tests (bash, run in a container via `just test`)
 ```
 
 ## Testing (TDD)
 
 - `build_files/90-verify.sh` is written first and run against the untouched base (red), then runs as the last build step (green). It asserts package presence, file modes/ownership (setgid `1Password-BrowserSupport`, setuid `chrome-sandbox`), fixed GIDs, tmpfiles/sysusers entries, allow-list contents, service enablement, the Firefox pref file, the beta remote and its signing key, AppImage + stamp, hook syntax.
+- `tests/test-claude-distrobox-init.sh`, `-setup.sh` and `-hook.sh` cover the in-box install script (stub curl/gpg/apt-get/dpkg-query), the per-user setup (stub distrobox) and the launcher hook (stub systemd-run).
 - `tests/test-emudeck-hook.sh` and `tests/test-firefox-setup.sh` run the two runtime scripts with a temp `HOME`, a stub `flatpak`, and overridable source dirs, asserting the files they produce.
 - Local runs use Docker Desktop (`docker build` / `docker run`); CI uses the template's podman recipes.
 - Review gate: `code-reviewer` agent, up to 3 rounds, before anything is pushed. No commits without Kevin's go-ahead.
@@ -64,6 +70,7 @@ tests/                        runtime-script tests (bash, run in a container via
 ## Risks / uncertainty
 
 - The 2026-09-19 Firefox-beta pivot was not built or run locally (Kevin chose to skip Docker runs): only the stubbed script test ran, in Git Bash. Unverified flatpak behaviour it relies on: `flatpak preinstall` installing `Branch=beta` next to an already-installed stable, the extension point following the app's branch, and the newly installed branch becoming current. The first CI build is the first real run of `90-verify.sh` with these changes.
+- Claude Desktop in a distrobox is untested on a real desktop: Electron sandbox in a rootless container, browser login hand-off (`claude://`), Cowork (QEMU/KVM in the box). Mechanics confirmed only by reading distrobox 1.8.2.5's source (the version Fedora 44 ships).
 - Firefox proxy route is untested end to end; 1Password accepting `xdg-native-messaging-proxy` as the parent process is inferred from the `xdg-desktop-portal` / `flatpak-session-helper` precedents (~75%).
 - Fixed GIDs (see sysusers.d) must stay free on the target machine; sysusers falls back to another GID on collision, which would silently break the setgid check.
 - 1Password's polkit owner list is generated from `/etc/passwd`, which is empty at image build time, so the build bakes in `unix-user:1000` … `unix-user:1009`. Users with other UIDs cannot use the CLI/SSH-agent authorisation prompts.
