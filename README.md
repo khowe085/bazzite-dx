@@ -19,6 +19,7 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
 | Flatpaks | Obsidian, Spotify, OBS Studio, Discord and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
 | Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `claude`, created at first login and exported to the menu (see below) |
+| SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
 
 The last build step, `build_files/90-verify.sh`, checks all of the above and fails the build otherwise.
 
@@ -54,6 +55,36 @@ To check the link: in Firefox open `about:config` and confirm the pref is `1`, i
 extension, then look at `journalctl --user -u xdg-native-messaging-proxy` and 1Password's
 Settings → Browser → integration status. If 1Password refuses the connection, the parent process name it
 sees is what belongs in `custom_allowed_browsers`.
+
+## SSH keys and Git signing with 1Password
+
+The system side of 1Password's [SSH agent](https://www.1password.dev/ssh/get-started/) and
+[Git commit signing](https://www.1password.dev/ssh/git-commit-signing/) setup is already in place:
+
+- `/etc/ssh/ssh_config.d/60-1password-agent.conf` points every host at the agent socket with
+  `IdentityAgent ~/.1password/agent.sock`, the setting 1Password documents for `~/.ssh/config`. That
+  setting outranks `SSH_AUTH_SOCK`, so the drop-in only applies it when 1Password's socket exists and
+  you are not connected over SSH. When you SSH into this machine a forwarded agent keeps working, and
+  with 1Password's agent off whatever agent the session has stays in charge. Your own `~/.ssh/config`
+  still wins.
+- The system Git config sets `gpg.format = ssh`, `gpg.ssh.program = /opt/1Password/op-ssh-sign` and
+  `commit.gpgsign = true`.
+
+What is left is per user and done in the app:
+
+1. Settings → Developer → **Use the SSH Agent**, and Settings → General → **Keep 1Password in the system
+   tray** so the agent outlives the window.
+2. Open the SSH key you sign with, choose **Configure Commit Signing**, then **Edit Automatically**. That
+   writes `user.signingkey` to `~/.gitconfig`.
+
+Until a signing key is set, everything that creates a commit (`commit`, `rebase`, `cherry-pick`, `revert`,
+`merge --no-ff`, `am`) stops with `either user.signingkey or gpg.ssh.defaultKeyCommand needs to be
+configured`. `git commit --no-gpg-sign` gets past it for a commit, and `git -c commit.gpgsign=false
+<command>` for the rest.
+
+Optional, from the same docs: to verify signatures locally, create `~/.ssh/allowed_signers` and run
+`git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers`. Tools that ignore `ssh_config`
+need `SSH_AUTH_SOCK=~/.1password/agent.sock` instead.
 
 ## EmuDeck
 
@@ -162,3 +193,6 @@ docker run --rm -v "$PWD:/src:ro" bazzite-dx:local bash /src/tests/test-emudeck-
 - Claude Desktop in the distrobox has not been run on a real desktop yet. Anthropic supports Ubuntu
   22.04 and later and the box is Ubuntu 26.04, but the Electron sandbox inside a rootless container, the
   login hand-off from the browser, and Cowork (which needs QEMU/KVM inside the box) are untried.
+- A distrobox shares your home, so it reads the `~/.gitconfig` that 1Password's commit signing setup
+  writes, but it has no `/opt/1Password/op-ssh-sign`. Commits made inside a box, the `claude` box
+  included, fail once signing is configured unless they pass `--no-gpg-sign`.

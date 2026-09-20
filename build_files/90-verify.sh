@@ -47,6 +47,19 @@ check "1password repo disabled" bash -c 'dnf5 repolist --disabled | grep -q "^1p
 check "custom_allowed_browsers allows xdg-native-messaging-proxy" grep -qx 'xdg-native-messaging-proxy' /etc/1password/custom_allowed_browsers
 check "custom_allowed_browsers is root:root 644" test "$(mode_of /etc/1password/custom_allowed_browsers)" = "644 root:root"
 
+echo "== 1Password SSH agent and Git signing"
+check "op-ssh-sign ships with 1Password" test -x "$OP/op-ssh-sign"
+check "system git config signs with SSH" test "$(git config --system gpg.format)" = ssh
+check "system git config uses 1Password's signer" test "$(git config --system gpg.ssh.program)" = /opt/1Password/op-ssh-sign
+check "system git config signs commits by default" test "$(git config --system --type=bool commit.gpgsign)" = true
+SSH_DROPIN=/etc/ssh/ssh_config.d/60-1password-agent.conf
+check "ssh agent drop-in is root:root 644" test "$(mode_of "$SSH_DROPIN")" = "644 root:root"
+check "drop-in points at 1Password's agent socket" grep -Eqx '[[:space:]]*IdentityAgent ~/\.1password/agent\.sock' "$SSH_DROPIN"
+check "ssh_config pulls in ssh_config.d" grep -Eqi '^[[:space:]]*Include[[:space:]]+/etc/ssh/ssh_config\.d/\*\.conf' /etc/ssh/ssh_config
+# The drop-in only applies with 1Password's socket present, which a build never has; what matters
+# here is that the whole system ssh configuration still parses with it in place.
+check "system ssh configuration parses with the drop-in" ssh -G example.com
+
 echo "== Firefox flatpak <-> 1Password (xdg-native-messaging-proxy)"
 check "xdg-native-messaging-proxy installed" rpm -q xdg-native-messaging-proxy
 check "proxy package provides the org.freedesktop.NativeMessagingProxy bus service" bash -c 'rpm -ql xdg-native-messaging-proxy | grep -q "dbus-1/services/org.freedesktop.NativeMessagingProxy.service"'

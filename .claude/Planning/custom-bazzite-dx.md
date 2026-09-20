@@ -11,6 +11,7 @@ Written 2026-09-11. Decisions marked **(K)** were confirmed by Kevin; **(open)**
 | Base image | `bazzite-dx:stable` pinned by digest (Renovate-friendly) | **(K)** |
 | .NET 10 SDK | Fedora 44 package `dotnet-sdk-10.0` (10.0.111) | **(open)** vs Microsoft repo |
 | 1Password | Official RPM repo, installed at build; relocated `/var/opt/1Password` → `/usr/lib/opt/1Password` + tmpfiles symlink (bazzite-dx's own `/opt` pattern); groups pre-created with fixed GIDs + `sysusers.d` so they exist on existing installs | verified spike |
+| 1Password SSH agent + Git signing | **2026-09-20 (K): preconfigure the system per 1Password's docs; Kevin does the in-app part on first boot, and his SSH keys live in 1Password too.** `/etc/ssh/ssh_config.d/60-1password-agent.conf` sets the documented `IdentityAgent ~/.1password/agent.sock` system-wide, but conditionally: `IdentityAgent` outranks `SSH_AUTH_SOCK`, so it applies only when not connected over SSH (1Password documents `Match host * exec "test -z $SSH_TTY"` for that; `SSH_CONNECTION` also covers TTY-less remote sessions, checked against OpenSSH 10.3) and only when the agent socket exists. `git config --system` sets `gpg.format=ssh`, `gpg.ssh.program=/opt/1Password/op-ssh-sign`, `commit.gpgsign=true`; `user.signingkey` stays per user. Not set: `SSH_AUTH_SOCK` for tools that ignore ssh_config, `gpg.ssh.allowedSignersFile` (per-user file), 1Password autostart. | **(K)** |
 | Firefox flatpak ↔ 1Password | `xdg-native-messaging-proxy` route: install the proxy, allow-list it in `/etc/1password/custom_allowed_browsers`, oneshot service that (a) copies a pref file (`widget.use-xdg-desktop-portal.native-messaging-proxy=1`) into the `org.mozilla.firefox.systemconfig` extension's `defaults/pref/` (the mechanism Bazzite's own flatpak manager uses for `/usr/share/ublue-os/firefox-config/*.js`) and (b) adds `--talk-name=org.freedesktop.NativeMessagingProxy` to the system flatpak override. Stable Flathub Firefox only gets the proxy client with 157 (2026-09-29 per Mozilla's calendar). **Pivot 2026-09-19 (K): install Firefox beta (157, on beta since 2026-09-14) from the `flathub-beta` remote via the preinstall drop-in; the setup service fills both the `stable` and `beta` extension branches with Bazzite's prefs plus ours.** Flip the drop-in to `Branch=stable` once stable is ≥ 157. | **(K)** |
 | EmuDeck | `ujust get-emudeck` is GUI-driven (downloads, then hands the file to Gear Lever), so the first-login hook does its non-interactive equivalent: download the latest EmuDeck AppImage to `~/Applications` + desktop entry. Wizard choices (High integration = Steam ROM Manager, Cloud Sync, Bezels, Autosave, classic 4:3 ARs, Patreon token) cannot be pre-seeded — state lives in Electron localStorage — so they are documented in the README. | **(K)** run Bazzite's recipe; token stays out of image |
 | Eden | Fetch latest `Eden-Linux-<ver>-amd64-clang-pgo.AppImage` from git.eden-emu.dev at build into `/usr/lib/eden`; hook places it at `~/Applications/Eden.AppImage` (the exact path EmuDeck's `emuDeckEden.sh` expects, since EmuDeck doesn't download Eden). Replaced when the image carries a newer version than the hook last placed; a user-placed copy (no stamp) is left alone. | variant **(open)** |
@@ -30,6 +31,7 @@ Justfile, image-template.env  template recipes; IMAGE_NAME=bazzite-dx, REPO_ORGA
 build_files/build.sh          copies system_files/ (modes normalised), runs NN-*.sh in order
 build_files/10-dotnet.sh
 build_files/20-1password.sh
+build_files/25-1password-git-signing.sh   system git config for SSH signing through op-ssh-sign
 build_files/30-firefox-native-messaging.sh   installs xdg-native-messaging-proxy, enables service
 build_files/40-eden.sh        downloads the Eden AppImage into /usr/lib/eden + VERSION stamp
 build_files/50-tailscale.sh   enables tailscaled
@@ -40,6 +42,7 @@ build_files/80-forge-clis.sh  installs gh (dnf) and runs install-tea.sh
 build_files/install-tea.sh    downloads and checksum-verifies Gitea's tea; not numbered, so build.sh does not run it on its own
 build_files/90-verify.sh      image test (see Testing)
 system_files/etc/1password/custom_allowed_browsers
+system_files/etc/ssh/ssh_config.d/60-1password-agent.conf   every host uses 1Password's SSH agent socket
 system_files/etc/flatpak/remotes.d/flathub-beta.flatpakrepo   Flathub's official beta remote file, verbatim
 system_files/usr/lib/sysusers.d/onepassword.conf
 system_files/usr/lib/tmpfiles.d/onepassword.conf
@@ -60,6 +63,7 @@ tests/                        script tests (bash, run in a container via `just t
 ## Testing (TDD)
 
 - `build_files/90-verify.sh` is written first and run against the untouched base (red), then runs as the last build step (green). It asserts package presence, file modes/ownership (setgid `1Password-BrowserSupport`, setuid `chrome-sandbox`), fixed GIDs, tmpfiles/sysusers entries, allow-list contents, service enablement, the Firefox pref file, the beta remote and its signing key, AppImage + stamp, hook syntax.
+- `tests/test-1password-ssh-git.sh` runs the git-signing build step against a scratch system gitconfig (values set, existing settings kept, idempotent, plain commit refused until a key exists) and feeds the ssh drop-in to the real `ssh -G`.
 - `tests/test-claude-distrobox-init.sh`, `-setup.sh` and `-hook.sh` cover the in-box install script (stub curl/gpg/apt-get/dpkg-query), the per-user setup (stub distrobox) and the launcher hook (stub systemd-run).
 - `tests/test-install-tea.sh` covers the tea download (stub curl, real sha256sum): happy path, checksum mismatch, unusable version lookup, failed download.
 - `tests/test-emudeck-hook.sh` and `tests/test-firefox-setup.sh` run the two runtime scripts with a temp `HOME`, a stub `flatpak`, and overridable source dirs, asserting the files they produce.
