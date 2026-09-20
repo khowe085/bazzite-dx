@@ -12,6 +12,7 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | .NET 10 SDK | Fedora's `dotnet-sdk-10.0` package |
 | 1Password | Official RPM, relocated to `/usr/lib/opt/1Password` with a tmpfiles link at `/var/opt/1Password`; groups `onepassword` (GID 20200) and `onepassword-mcp` (GID 20201) declared in `sysusers.d` so they exist on every machine |
 | Firefox flatpak ↔ 1Password | Firefox beta Flatpak plus the `xdg-native-messaging-proxy` route (see below) |
+| `gh` and `tea` | GitHub's CLI from Fedora's `gh` package; Gitea's CLI `tea` (also works with Forgejo) as the latest release binary from dl.gitea.com, checked against its published SHA-256 |
 | Tailscale | Already in Bazzite; `tailscaled` is enabled at build, run `sudo tailscale up` once |
 | EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
@@ -154,7 +155,9 @@ docker run --rm -v "$PWD:/src:ro" bazzite-dx:local bash /src/tests/test-emudeck-
   from `/etc/passwd` at install time, which has no desktop users inside a build). Users with other UIDs
   cannot use the CLI/SSH-agent authorisation prompts.
 - The Eden and EmuDeck downloads are trusted on HTTPS alone: Eden publishes no checksums for its release
-  assets, and Bazzite's own `ujust get-emudeck` verifies nothing either.
+  assets, and Bazzite's own `ujust get-emudeck` verifies nothing either. `tea` is checked against a
+  SHA-256 that Gitea serves from the same host as the binary, which catches a broken download but not a
+  compromised server; Gitea publishes no signature for it.
 - Claude Desktop in the distrobox has not been run on a real desktop yet. Anthropic supports Ubuntu
   22.04 and later and the box is Ubuntu 26.04, but the Electron sandbox inside a rootless container, the
   login hand-off from the browser, and Cowork (which needs QEMU/KVM inside the box) are untried.

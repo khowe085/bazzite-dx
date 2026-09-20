@@ -18,6 +18,7 @@ Written 2026-09-11. Decisions marked **(K)** were confirmed by Kevin; **(open)**
 | Claude Desktop | **2026-09-19 (K): in an Ubuntu distrobox instead of converting the `.deb`.** Manifest `/usr/share/claude-distrobox/claude.ini`, also appended to `/etc/distrobox/apps.ini` (ublue's manifest for `ujust setup-distrobox-app`): image `ghcr.io/ublue-os/ubuntu-toolbox` (Ubuntu 26.04), init hook = `/run/host/usr/libexec/claude-distrobox-init` (Anthropic's apt repo, key fingerprint pinned, `apt install claude-desktop`, skipped once dpkg reports the package installed), app exported to the menu. The first-login hook only launches `/usr/libexec/claude-distrobox-setup` via `systemd-run --user`, because ublue-user-setup runs hooks sequentially; the setup reads the `/usr` manifest (a locally edited `/etc` file survives image updates, and assemble exits 0 when the section is missing), verifies the box exists instead of trusting assemble's exit status, and finishes a half-made box rather than deleting it. | **(K)** automatic at first login |
 | Tailscale | Already in base (RPM 1.102.3). `tailscaled` enabled at build = what `ujust tailscale enable` does. | **(K)** |
 | 1Password CLI | Not included. | **(open)** |
+| `gh` and `tea` | **2026-09-20 (K).** `gh` from Fedora 44's package (2.97.0; the base's convention is to avoid extra repos). `tea` = Gitea's CLI (my reading of "tea"; it also works with Forgejo): nobody packages it, so `build_files/install-tea.sh` takes the latest release binary from dl.gitea.com, version found through the `releases/latest` redirect, verified against the published `.sha256`, installed to `/usr/bin/tea`. | **(K)** include both; sources **(open)** |
 
 ## Repo layout (from ublue-os/image-template)
 
@@ -33,6 +34,8 @@ build_files/40-eden.sh        downloads the Eden AppImage into /usr/lib/eden + V
 build_files/50-tailscale.sh   enables tailscaled
 build_files/60-flatpaks.sh    enables custom-flatpak-preinstall.service
 build_files/70-claude-distrobox.sh   appends /usr/share/claude-distrobox/claude.ini to /etc/distrobox/apps.ini
+build_files/80-forge-clis.sh  installs gh (dnf) and runs install-tea.sh
+build_files/install-tea.sh    downloads and checksum-verifies Gitea's tea; not numbered, so build.sh does not run it on its own
 build_files/90-verify.sh      image test (see Testing)
 system_files/etc/1password/custom_allowed_browsers
 system_files/etc/flatpak/remotes.d/flathub-beta.flatpakrepo   Flathub's official beta remote file, verbatim
@@ -48,13 +51,14 @@ system_files/usr/share/ublue-os/firefox-config/zz-onepassword-native-messaging.j
 system_files/usr/share/flatpak/preinstall.d/custom-apps.preinstall
 system_files/usr/share/ublue-os/user-setup.hooks.d/30-emudeck.sh
 system_files/usr/share/ublue-os/user-setup.hooks.d/40-claude-distrobox.sh
-tests/                        runtime-script tests (bash, run in a container via `just test`)
+tests/                        script tests (bash, run in a container via `just test`)
 ```
 
 ## Testing (TDD)
 
 - `build_files/90-verify.sh` is written first and run against the untouched base (red), then runs as the last build step (green). It asserts package presence, file modes/ownership (setgid `1Password-BrowserSupport`, setuid `chrome-sandbox`), fixed GIDs, tmpfiles/sysusers entries, allow-list contents, service enablement, the Firefox pref file, the beta remote and its signing key, AppImage + stamp, hook syntax.
 - `tests/test-claude-distrobox-init.sh`, `-setup.sh` and `-hook.sh` cover the in-box install script (stub curl/gpg/apt-get/dpkg-query), the per-user setup (stub distrobox) and the launcher hook (stub systemd-run).
+- `tests/test-install-tea.sh` covers the tea download (stub curl, real sha256sum): happy path, checksum mismatch, unusable version lookup, failed download.
 - `tests/test-emudeck-hook.sh` and `tests/test-firefox-setup.sh` run the two runtime scripts with a temp `HOME`, a stub `flatpak`, and overridable source dirs, asserting the files they produce.
 - Local runs use Docker Desktop (`docker build` / `docker run`); CI uses the template's podman recipes.
 - Review gate: `code-reviewer` agent, up to 3 rounds, before anything is pushed. No commits without Kevin's go-ahead.

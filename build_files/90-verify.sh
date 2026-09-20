@@ -120,6 +120,12 @@ for script in "$CLAUDE_INIT" "$CLAUDE_SETUP" "$CLAUDE_HOOK"; do
 	check "$script parses" bash -n "$script"
 done
 
+echo "== Forge CLIs"
+check "gh package installed" rpm -q gh
+check "gh runs" gh --version
+check "tea installed" test -x /usr/bin/tea
+check "tea runs and reports a version" bash -c 'tea --version | grep -Eq "[0-9]+\.[0-9]+\.[0-9]+"'
+
 if ((fails > 0)); then
 	echo "$fails check(s) failed"
 	exit 1
