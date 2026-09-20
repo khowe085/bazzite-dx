@@ -1,0 +1,53 @@
+#!/usr/bin/bash
+# Creates the "claude" distrobox for the calling user and exports Claude Desktop to the menu.
+# Started detached by user-setup.hooks.d/40-claude-distrobox.sh; safe to run again at any point.
+set -euo pipefail
+
+BOX=claude
+APP=claude-desktop
+# The copy under /usr, not /etc/distrobox/apps.ini: ostree keeps a locally edited /etc file as it is
+# across image updates, and assemble exits 0 without doing anything when the section is missing.
+MANIFEST=/usr/share/claude-distrobox/claude.ini
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
+STAMP="$STATE_DIR/claude-distrobox.created"
+CREATING="$STATE_DIR/claude-distrobox.creating"
+
+box_exists() {
+	# Same test distrobox-assemble uses. Captured first: under pipefail a `list | grep -q` can fail
+	# on SIGPIPE even when it matches.
+	local boxes
+	boxes="$(distrobox list)"
+	grep -qw " ${BOX} " <<<"$boxes"
+}
+
+if [[ -e "$STAMP" ]]; then
+	exit 0
+fi
+mkdir -p "$STATE_DIR"
+
+# A box we did not start creating belongs to the user (made by hand or with ujust).
+if box_exists && [[ ! -e "$CREATING" ]]; then
+	echo "a distrobox named ${BOX} already exists; leaving it alone"
+	touch "$STAMP"
+	exit 0
+fi
+
+if ! box_exists; then
+	touch "$CREATING"
+	# The exit status settles nothing: 0 when the manifest has no such section, non-zero when only
+	# the final export failed on a finished box. The checks below decide.
+	distrobox assemble create --file "$MANIFEST" --name "$BOX" || true
+fi
+if ! box_exists; then
+	echo "the ${BOX} distrobox was not created; it will be retried at the next login" >&2
+	exit 1
+fi
+
+# Entering starts the box, which runs its init hook (that installs the app if an earlier attempt was
+# cut short), and exporting twice is harmless. So a half-made box gets finished here, never rebuilt.
+if ! distrobox enter "$BOX" -- distrobox-export --app "$APP" </dev/null; then
+	echo "could not export ${APP} from the ${BOX} distrobox; it will be retried at the next login" >&2
+	exit 1
+fi
+touch "$STAMP"
+rm -f "$CREATING"

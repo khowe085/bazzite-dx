@@ -96,6 +96,30 @@ check "libflatpak parses the 'Flatpak Preinstall' group prefix" bash -c 'cat /us
 check "every preinstall section is well-formed" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -c '^\[Flatpak Preinstall [A-Za-z0-9._-]*\]\$' '$PREINSTALL')\""
 check "every preinstall section is followed by its Branch line" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -A1 '^\[' '$PREINSTALL' | grep -cEx 'Branch=(stable|beta)')\""
 
+echo "== Claude Desktop distrobox"
+APPS_INI=/etc/distrobox/apps.ini
+CLAUDE_INI=/usr/share/claude-distrobox/claude.ini
+CLAUDE_INIT=/usr/libexec/claude-distrobox-init
+CLAUDE_SETUP=/usr/libexec/claude-distrobox-setup
+CLAUDE_HOOK=/usr/share/ublue-os/user-setup.hooks.d/40-claude-distrobox.sh
+check "distrobox is available in the base" command -v distrobox
+check "systemd-run is available for the detached setup" command -v systemd-run
+check "base still offers ujust setup-distrobox-app" grep -rq "setup-distrobox-app" /usr/share/ublue-os/just/
+in_manifest() { grep -Fx -- "$1" "$CLAUDE_INI"; }
+check "manifest defines the claude box" in_manifest '[claude]'
+check "claude box uses the ublue Ubuntu toolbox image" in_manifest 'image=ghcr.io/ublue-os/ubuntu-toolbox:latest'
+check "claude box runs the install script from the host image" in_manifest "init_hooks=\"/run/host$CLAUDE_INIT\""
+check "claude box exports the app to the menu" in_manifest 'exported_apps="claude-desktop"'
+check "setup reads that manifest" grep -Fqx "MANIFEST=$CLAUDE_INI" "$CLAUDE_SETUP"
+check "hook launches the setup script" grep -Fq " $CLAUDE_SETUP" "$CLAUDE_HOOK"
+check "apps.ini ends with the same manifest, for ujust setup-distrobox-app claude" bash -c "tail -n \"\$(wc -l <'$CLAUDE_INI')\" '$APPS_INI' | cmp -s - '$CLAUDE_INI'"
+check "apps.ini has exactly one [claude] section" test "$(grep -cFx '[claude]' "$APPS_INI")" = 1
+check "the appended section did not replace the base's entries" bash -c "test \"\$(grep -c '^\[' '$APPS_INI')\" -gt 1"
+for script in "$CLAUDE_INIT" "$CLAUDE_SETUP" "$CLAUDE_HOOK"; do
+	check "$script is executable" test -x "$script"
+	check "$script parses" bash -n "$script"
+done
+
 if ((fails > 0)); then
 	echo "$fails check(s) failed"
 	exit 1

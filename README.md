@@ -16,6 +16,7 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
 | Flatpaks | Obsidian, Spotify, OBS Studio, Discord and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
+| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `claude`, created at first login and exported to the menu (see below) |
 
 The last build step, `build_files/90-verify.sh`, checks all of the above and fails the build otherwise.
 
@@ -68,6 +69,35 @@ before. An Eden you put there yourself (no `.eden.image-version` stamp next to i
 To ship a different Eden flavour (`steamdeck`, `rog-ally`, `legacy`, or the `gcc-standard` builds), pass
 `--build-arg EDEN_VARIANT=steamdeck-clang-pgo` to `podman build` / `docker build`, or change the `ARG`
 default in the Containerfile (the `just build` recipe passes no build args).
+
+## Claude Desktop
+
+Anthropic only ships Claude Desktop for Debian and Ubuntu, so it lives in an Ubuntu
+[distrobox](https://distrobox.it/) instead of the image:
+
+- The box is defined in `/usr/share/claude-distrobox/claude.ini`: image `ghcr.io/ublue-os/ubuntu-toolbox`,
+  `claude-desktop` exported to the menu. The build also appends that entry to `/etc/distrobox/apps.ini`,
+  the manifest behind Bazzite's `ujust setup-distrobox-app`.
+- The box's init hook is `/usr/libexec/claude-distrobox-init` from this image, which the box sees under
+  `/run/host`. On the first start it adds Anthropic's apt repository, refuses any signing key other than
+  the fingerprint Anthropic documents, and runs `apt install claude-desktop`. Later starts skip all of it.
+- A first-login hook starts `/usr/libexec/claude-distrobox-setup` as a detached user unit, so the other
+  setup hooks are not held up by what is roughly a 1 GB download, once per user. It reads the manifest
+  under `/usr`, so a locally edited `apps.ini` cannot make it silently skip the box. An attempt that fails
+  part-way is finished at the next login, not rebuilt. Follow it with
+  `journalctl --user -u claude-distrobox-setup`.
+
+Updates arrive through apt inside the box (`distrobox upgrade claude`). To rebuild the box from scratch:
+
+```bash
+distrobox assemble create --replace --file /usr/share/claude-distrobox/claude.ini
+```
+
+`ujust setup-distrobox-app claude` does the same from `/etc/distrobox/apps.ini`, but silently does nothing
+if you have edited that file, because an edited `/etc` file keeps its old contents across image updates.
+A box you remove (`distrobox rm claude`) stays removed. To have the next login create it again, remove
+the box first and then delete `~/.local/state/claude-distrobox.created`; with a box still present the
+setup treats it as yours and leaves it alone.
 
 ## Setting up the repository
 
@@ -125,6 +155,6 @@ docker run --rm -v "$PWD:/src:ro" bazzite-dx:local bash /src/tests/test-emudeck-
   cannot use the CLI/SSH-agent authorisation prompts.
 - The Eden and EmuDeck downloads are trusted on HTTPS alone: Eden publishes no checksums for its release
   assets, and Bazzite's own `ujust get-emudeck` verifies nothing either.
-- Anthropic's Claude Desktop is not included. Its Linux beta is Debian-only, but the `.deb` is a plain
-  `/usr/lib/claude-desktop` Electron payload whose dependencies bazzite-dx already has, so adding it
-  would be one build script along the lines of the 1Password one.
+- Claude Desktop in the distrobox has not been run on a real desktop yet. Anthropic supports Ubuntu
+  22.04 and later and the box is Ubuntu 26.04, but the Electron sandbox inside a rootless container, the
+  login hand-off from the browser, and Cowork (which needs QEMU/KVM inside the box) are untried.

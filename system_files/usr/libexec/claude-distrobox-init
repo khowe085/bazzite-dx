@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+# Init hook of the "claude" distrobox (see /etc/distrobox/apps.ini). Distrobox runs it as root
+# inside the Ubuntu box on every container start; the host's /usr is visible there under /run/host.
+# Installs Claude Desktop from Anthropic's apt repository, the way their Linux docs describe.
+set -euo pipefail
+
+KEY_URL=https://downloads.claude.ai/claude-desktop/key.asc
+KEY_FPR=31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE
+REPO_URL=https://downloads.claude.ai/claude-desktop/apt/stable
+KEYRING="${CLAUDE_KEYRING:-/usr/share/keyrings/claude-desktop-archive-keyring.asc}"
+SOURCES="${CLAUDE_SOURCES:-/etc/apt/sources.list.d/claude-desktop.list}"
+
+# Every start after the first takes this path, so it has to stay cheap and work offline. Ask dpkg
+# about the package rather than PATH about a binary whose name is Anthropic's to change.
+if [[ "$(dpkg-query -W -f='${db:Status-Status}' claude-desktop 2>/dev/null)" == installed ]]; then
+	exit 0
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+key="$(mktemp)"
+trap 'rm -f "$key"' EXIT
+
+curl -fsSLo "$key" "$KEY_URL"
+# Anthropic publishes this fingerprint in the install docs; trust no other key for the repository.
+# The file becomes the repository's keyring as a whole, so it must hold that one key and nothing else.
+keys="$(gpg --show-keys --with-colons "$key")"
+if [[ "$(grep -c '^pub:' <<<"$keys")" != 1 ]] || ! grep -qx "fpr:::::::::${KEY_FPR}:" <<<"$keys"; then
+	echo "the downloaded claude-desktop signing key is not exactly the key with fingerprint ${KEY_FPR}" >&2
+	exit 1
+fi
+install -Dm0644 "$key" "$KEYRING"
+echo "deb [arch=amd64,arm64 signed-by=${KEYRING}] ${REPO_URL} stable main" >"$SOURCES"
+
+apt-get update
+apt-get install -y claude-desktop
