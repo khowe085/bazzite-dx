@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cockpit (port 9090) answers the local machine only. firewalld accepts loopback traffic before it
+  consults any policy or zone, so rejecting the port for traffic from every zone leaves exactly that:
+  other machines, VMs and Tailscale peers are refused, http://localhost:9090 works.
+  The negative priority puts this ahead of the zones, some of which open the port (FedoraWorkstation
+  allows 1025-65535).
+-->
+<policy target="CONTINUE" priority="-100">
+  <short>Cockpit local only</short>
+  <description>Reject connections to Cockpit's port unless they come from this machine.</description>
+  <ingress-zone name="ANY"/>
+  <egress-zone name="HOST"/>
+  <rule>
+    <port port="9090" protocol="tcp"/>
+    <reject/>
+  </rule>
+</policy>

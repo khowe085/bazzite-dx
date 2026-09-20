@@ -17,7 +17,8 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | KDE defaults | Global theme Fedora Dark instead of Bazzite's Vapor (`LookAndFeelPackage` in `/etc/xdg/kdeglobals`), and Picture of the Day from the "Astronomy (NASA)" provider as the desktop background (a Plasma update script, run once per user). Natural scrolling for touchpads and mice (`[Libinput][Defaults]` groups in `/etc/xdg/kcminputrc`, which KWin reads per device type). All three are defaults: a global theme you picked yourself, a picture you set as wallpaper or another wallpaper type, and a scroll direction you set for a device all stay, and whatever you choose afterwards in System Settings sticks. The lock and login screens are not changed |
 | EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
-| Flatpaks | Obsidian, Spotify, OBS Studio, Discord and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
+| Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
+| Bazzite Portal selections | Cockpit, CoolerControl, DisplayLink, virtualization, Framework fan control, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3 and JetBrains Toolbox, switched on up front (see below) |
 | Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `claude`, created at first login and exported to the menu (see below) |
 | SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
 
@@ -131,6 +132,59 @@ if you have edited that file, because an edited `/etc` file keeps its old conten
 A box you remove (`distrobox rm claude`) stays removed. To have the next login create it again, remove
 the box first and then delete `~/.local/state/claude-distrobox.created`; with a box still present the
 setup treats it as yours and leaves it alone.
+
+## Bazzite Portal selections
+
+Entries of the Bazzite Portal, plus one `ujust` recipe, that this image switches on up front. Each is
+done the way its recipe does it, so the Portal and `ujust` still show and toggle them. The two package
+installs are the exception: the Portal only recognises layered packages, so it keeps listing
+CoolerControl and DisplayLink as not installed. Ignore its offer to install them.
+
+| Portal entry | In this image |
+|---|---|
+| Enable Cockpit | `cockpit.service` enabled, reachable from the machine itself only (`http://localhost:9090`): the firewalld policy `cockpit-local-only` rejects port 9090 from every zone, which covers other machines, VMs and Tailscale peers, while loopback traffic never reaches a policy. Its login goes over SSH to localhost, so it lets nobody in until SSH is on too (`ujust ssh enable`, the Portal's "Enable SSH remote access"), which this image leaves off |
+| Enable Tailscale | `tailscaled` enabled (see the table above) |
+| CoolerControl | `coolercontrol` and `liquidctl` from Terra, with the `coolercontrold` daemon enabled |
+| Install support for DisplayLink | negativo17's `displaylink`; the `evdi` kernel module is part of Bazzite |
+| Android Platform Tools | Nothing to do: bazzite-dx ships `android-tools` |
+| Enable visible password asterisks in CLI | `/etc/sudoers.d/enable-pwfeedback` |
+| Setup virtualization | bazzite-dx ships QEMU, libvirt and virt-manager and adds users to the `libvirt` group. Added here: `libvirtd` enabled, Bazzite's one-time `bazzite-libvirtd-setup.service`, the kernel arguments `kvm.ignore_msrs=1 kvm.report_ignored_msrs=0` (`/usr/lib/bootc/kargs.d/10-kvm-msrs.toml`) and `/var/lib/swtpm-localca` for emulated TPMs |
+| `ujust enable-framework-fan-control` | `fw-fanctrl.service` enabled |
+| Configure btrfs snapshots | First boot: a Snapper config for `/var/home` under Bazzite's config name `root`, keeping 5 hourly and 7 daily timeline snapshots and the 10 newest of those marked for Snapper's `number` cleanup, with the timeline and cleanup timers on. A snapshot taken without a cleanup algorithm stays until you delete it. A config that already exists is left alone. Restore with Btrfs Assistant |
+| Setup btrfs deduplication | First boot: a `beesd` config for the filesystem behind `/var/home` with the recipe's sizing and options, and its daily timer (at most 30 minutes a run, only with enough free memory). A config that already exists is left alone |
+| Clean Steam desktop icons automatically | First login: `steam-icons-cleanup.service` enabled for the user |
+| Enable globally upgrading FSR3.1+ to FSR4 (RDNA3) | First login: `~/.config/environment.d/99-proton-fsr4-rdna3.conf`. Only Proton-GE, Proton-EM and similar builds act on it |
+| JetBrains Toolbox | First login: the Portal's Homebrew cask install, detached; follow it with `journalctl --user -u jetbrains-toolbox-setup`. Retried at each login until it has worked once |
+| Get Media Apps: YouTube, Jellyfin | The VacuumTube and Jellyfin Desktop Flatpaks |
+
+Still done by hand in the Portal, because their recipes need a desktop session or a running Steam:
+Sunshine, Boxtron, Netflix, Crunchyroll, and adding the media apps to Steam.
+
+- Everything under "first boot" and "first login" is applied once. Switch it off in the Portal or with
+  `ujust` and it stays off. To apply it again, delete the stamp and start the unit
+  (`/var/lib/custom-home-snapshots/done` with `custom-home-snapshots.service`,
+  `/var/lib/custom-home-dedup/done` with `custom-home-dedup.service`), or delete the entry under
+  `~/.local/state/portal-tweaks/` and log in again. A Snapper or bees config that is still there
+  counts as yours and is left as it is, so remove that first (switching the entry off in the Portal or
+  with `ujust` does).
+- A first-boot unit that cannot do its job (say `/var/home` is not a btrfs subvolume of its own) fails
+  at every boot and leaves the system `degraded`. `systemctl status custom-home-snapshots.service` (or
+  `custom-home-dedup.service`) has the reason; `sudo systemctl disable` on the same unit ends it.
+- Snapshots hold on to disk space: what you delete under `/var/home`, a Steam library included, is only
+  freed once the last snapshot containing it ages out, up to a week later.
+- To reach Cockpit from other machines after all, take the rule out of the policy and reload; the
+  zone the connection arrives in must allow the port too (Fedora's workstation zone does):
+
+  ```bash
+  sudo firewall-cmd --permanent --policy=cockpit-local-only --remove-rich-rule='rule port port="9090" protocol="tcp" reject'
+  ```
+
+  then `sudo firewall-cmd --reload`.
+- CoolerControl and `fw-fanctrl` can both drive the Framework's fan. Leave the fan on CoolerControl's
+  default profile, or turn one of the two off.
+- Kernel arguments from `kargs.d` are applied by `bootc switch` and `bootc upgrade`. Check
+  `cat /proc/cmdline`; if they are missing, `rpm-ostree kargs --append-if-missing=kvm.ignore_msrs=1
+  --append-if-missing=kvm.report_ignored_msrs=0` adds them.
 
 ## Setting up the repository
 

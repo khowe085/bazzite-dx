@@ -111,7 +111,8 @@ PREINSTALL=/usr/share/flatpak/preinstall.d/custom-apps.preinstall
 check "flatpak preinstall accepts --system" bash -c 'flatpak preinstall --help | grep -q -- "--system"'
 check "flatpak preinstall accepts -y" bash -c 'flatpak preinstall --help | grep -q -- "-y, --assumeyes"'
 check "custom-flatpak-preinstall.service enabled" systemctl is-enabled custom-flatpak-preinstall.service
-for app in md.obsidian.Obsidian com.spotify.Client com.obsproject.Studio com.discordapp.Discord org.mozilla.firefox; do
+for app in md.obsidian.Obsidian com.spotify.Client com.obsproject.Studio com.discordapp.Discord rocks.shy.VacuumTube \
+	org.jellyfin.JellyfinDesktop org.mozilla.firefox; do
 	check "preinstall list has $app" grep -qx "\[Flatpak Preinstall $app\]" "$PREINSTALL"
 done
 check "Firefox comes from the beta branch" bash -c "grep -A1 -Fx '[Flatpak Preinstall org.mozilla.firefox]' '$PREINSTALL' | grep -qx 'Branch=beta'"
@@ -127,6 +128,74 @@ check "preinstall unit adds the flathub-beta remote before installing" grep -qx 
 check "libflatpak parses the 'Flatpak Preinstall' group prefix" bash -c 'cat /usr/lib64/libflatpak.so.* | grep -a -q "Flatpak Preinstall"'
 check "every preinstall section is well-formed" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -c '^\[Flatpak Preinstall [A-Za-z0-9._-]*\]\$' '$PREINSTALL')\""
 check "every preinstall section is followed by its Branch line" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -A1 '^\[' '$PREINSTALL' | grep -cEx 'Branch=(stable|beta)')\""
+
+echo "== Bazzite Portal selections: system"
+JUST_DIR=/usr/share/ublue-os/just
+check "cockpit.service enabled" systemctl is-enabled cockpit.service
+check "base still ships the container cockpit.service starts" test -f /usr/share/containers/systemd/cockpit-container.container
+# Cockpit is for the local machine only. firewalld accepts loopback traffic before it looks at any
+# policy or zone, so rejecting the port for every zone leaves exactly that.
+cockpit_policy() { firewall-offline-cmd --policy=cockpit-local-only "$@"; }
+check "firewalld.service is enabled in the base" systemctl is-enabled firewalld.service
+check "firewalld loads the cockpit-local-only policy" firewall-offline-cmd --info-policy=cockpit-local-only
+check "it applies to traffic from every zone" cockpit_policy --query-ingress-zone=ANY
+check "and only to traffic meant for this machine" cockpit_policy --query-egress-zone=HOST
+check "it rejects Cockpit's port" cockpit_policy --query-rich-rule='rule port port="9090" protocol="tcp" reject'
+check "it is consulted before the zones, which may allow the port" bash -c 'firewall-offline-cmd --info-policy=cockpit-local-only | grep -Eq "^ *priority: -[0-9]+$"'
+check "base still runs Cockpit with no port of its own choosing, so on 9090" bash -c 'f=/usr/share/containers/systemd/cockpit-container.container; grep -qx "Exec=/container/label-run" "$f" && ! grep -q "^PublishPort=" "$f"'
+check "fw-fanctrl.service enabled" systemctl is-enabled fw-fanctrl.service
+check "coolercontrol and liquidctl installed" rpm -q coolercontrol liquidctl
+check "coolercontrold.service enabled" systemctl is-enabled coolercontrold.service
+check "displaylink installed" rpm -q displaylink
+check "the base has an evdi kernel module for displaylink to drive" bash -c 'find /usr/lib/modules -name "evdi.ko*" | grep -q .'
+check "Terra is still disabled after installing from it" bash -c 'dnf5 repolist --disabled | grep -q "^terra "'
+check "negativo17 is still disabled after installing from it" bash -c 'dnf5 repolist --disabled | grep -q "fedora-multimedia"'
+check "adb comes with the base (the Portal's Android Platform Tools)" command -v adb
+check "sudo shows asterisks while a password is typed" grep -qx 'Defaults pwfeedback' /etc/sudoers.d/enable-pwfeedback
+check "the sudoers drop-in is root:root 440" test "$(mode_of /etc/sudoers.d/enable-pwfeedback)" = "440 root:root"
+check "sudo accepts the drop-in" visudo -cf /etc/sudoers.d/enable-pwfeedback
+check "libvirtd.service enabled" systemctl is-enabled libvirtd.service
+check "bazzite-libvirtd-setup.service enabled" systemctl is-enabled bazzite-libvirtd-setup.service
+check "kargs.d carries the recipe's KVM arguments" grep -qx 'kargs = \["kvm.ignore_msrs=1", "kvm.report_ignored_msrs=0"\]' /usr/lib/bootc/kargs.d/10-kvm-msrs.toml
+check "the recipe still sets exactly those two" bash -c "test \"\$(grep -rhoE -- '--append-if-missing=\"?kvm\.[a-z_]+=[0-9]+' $JUST_DIR | sort -u | wc -l)\" = 2"
+check "tmpfiles.d creates the swtpm CA directory" grep -qx 'd /var/lib/swtpm-localca 0750 tss root -' /usr/lib/tmpfiles.d/swtpm-localca.conf
+check "its owner exists" getent passwd tss
+
+echo "== Bazzite Portal selections: /var/home snapshots and deduplication"
+SNAP_SETUP=/usr/libexec/custom-home-snapshots-setup
+DEDUP_SETUP=/usr/libexec/custom-home-dedup-setup
+for unit in custom-home-snapshots custom-home-dedup; do
+	check "$unit.service enabled" systemctl is-enabled "$unit.service"
+	check "$unit.service runs its setup script" grep -qx "ExecStart=/usr/libexec/$unit-setup" "/usr/lib/systemd/system/$unit.service"
+	check "$unit.service gets the state directory the script needs" grep -qx "StateDirectory=$unit" "/usr/lib/systemd/system/$unit.service"
+done
+for tool in findmnt snapper beesd; do
+	check "$tool is available in the base" command -v "$tool"
+done
+for timer in snapper-timeline.timer snapper-cleanup.timer beesd@.timer; do
+	check "base still ships $timer" test -f "/usr/lib/systemd/system/$timer"
+done
+# The setups repeat what the base's own tooling does; notice when that changes under them.
+check "Bazzite still keeps the /var/home config under snapper's default name" grep -q 'snapper create-config /var/home' /usr/libexec/bazzite-snapper-config
+check "bees sample config has the three lines the setup rewrites" bash -c 'f=/etc/bees/beesd.conf.sample; grep -q "^UUID=" "$f" && grep -q "^# DB_SIZE=" "$f" && grep -q "^# OPTIONS=" "$f"'
+check "Bazzite's beesd recipe still sizes the hash table the same way" bash -c "grep -rq 'readonly MIN_FS_TB=1\$' $JUST_DIR && grep -rq 'readonly MAX_FS_TB=4\$' $JUST_DIR && grep -rq 'readonly HASH_SIZE_MB_PER_TB=512\$' $JUST_DIR"
+check "and still passes bees the same options" grep -rqF -- '--strip-paths --no-timestamps --thread-factor 0.125 --thread-min 1 --throttle-factor 100' "$JUST_DIR"
+BEES_MEMORY_TEST="free -m | awk '/^Mem:/ {print \\\$7}') -gt \${mem_thresh_mb}"
+check "and still holds bees back with the same memory test" grep -rqF -- "$BEES_MEMORY_TEST" "$JUST_DIR"
+check "base still ends a bees run after 30 minutes, as the README says" grep -rq 'timeout 30m /usr/bin/beesd' /etc/systemd/system/beesd@.service.d/
+
+echo "== Bazzite Portal selections: per user"
+TWEAKS_HOOK=/usr/share/ublue-os/user-setup.hooks.d/35-portal-tweaks.sh
+TOOLBOX_SETUP=/usr/libexec/jetbrains-toolbox-setup
+check "hook launches the JetBrains Toolbox setup" grep -Fq " $TOOLBOX_SETUP" "$TWEAKS_HOOK"
+check "base still ships the Steam icon cleanup user unit" test -f /usr/lib/systemd/user/steam-icons-cleanup.service
+check "ujust global-fsr4-rdna3 still uses the same file and variable" bash -c "grep -rq '99-proton-fsr4-rdna3.conf' $JUST_DIR && grep -rq 'PROTON_FSR4_RDNA3_UPGRADE=1' $JUST_DIR"
+check "the Portal still installs JetBrains Toolbox with the same brew steps" grep -Fq 'brew trust ublue-os/tap && brew tap ublue-os/tap && brew install --cask jetbrains-toolbox-linux' /usr/share/yafti/yafti.yml
+check "brew-setup.service, which unpacks Homebrew, is enabled in the base" systemctl is-enabled brew-setup.service
+for script in "$SNAP_SETUP" "$DEDUP_SETUP" "$TWEAKS_HOOK" "$TOOLBOX_SETUP"; do
+	check "$script is executable" test -x "$script"
+	check "$script parses" bash -n "$script"
+done
 
 echo "== Claude Desktop distrobox"
 APPS_INI=/etc/distrobox/apps.ini

@@ -1,0 +1,80 @@
+#!/usr/bin/bash
+# What `ujust configure-beesd` (the Portal's "Setup btrfs deduplication") does, minus its menus, for
+# one filesystem: the one holding /var/home. custom-home-dedup.service runs this at every boot; it
+# acts once and then stays out of the way, so a setup removed later with ujust stays removed.
+set -euo pipefail
+
+TARGET=/var/home
+STAMP="${STATE_DIRECTORY:?is set by the systemd unit}/done"
+CREATING="$STATE_DIRECTORY/creating"
+ROOT="${HOME_DEDUP_ROOT:-}"
+BEES_DIR="$ROOT/etc/bees"
+UNIT_DIR="$ROOT/etc/systemd/system"
+# The recipe reads the sample from /usr/etc, ostree's pristine copy of the image's /etc. Where there
+# is no /usr/etc (the image run as a plain container), /etc still has the file.
+SAMPLE="$ROOT/usr/etc/bees/beesd.conf.sample"
+if [[ ! -e "$SAMPLE" ]]; then
+	SAMPLE="$BEES_DIR/beesd.conf.sample"
+fi
+
+# The recipe's hash table sizing.
+readonly MIN_FS_TB=1
+readonly MAX_FS_TB=4
+readonly HASH_SIZE_MB_PER_TB=512
+
+if [[ -e "$STAMP" ]]; then
+	exit 0
+fi
+fstype="$(findmnt -no FSTYPE --target "$TARGET")"
+if [[ "$fstype" != btrfs ]]; then
+	echo "$TARGET is on ${fstype}, not btrfs; nothing to deduplicate"
+	exit 0
+fi
+uuid="$(findmnt -no UUID --target "$TARGET")"
+size_bytes="$(findmnt -bno SIZE --target "$TARGET")"
+# Both end up in file names and arithmetic. An empty UUID in particular would turn the drop-in
+# path below into beesd@.service.d, Bazzite's own drop-in directory for every bees instance.
+if [[ ! "$uuid" =~ ^[0-9a-fA-F-]{36}$ || ! "$size_bytes" =~ ^[0-9]+$ ]]; then
+	echo "unusable answer from findmnt for $TARGET: UUID '$uuid', size '$size_bytes'" >&2
+	exit 1
+fi
+conf="$BEES_DIR/$uuid.conf"
+dropin_dir="$UNIT_DIR/beesd@$uuid.service.d"
+
+# A config we did not start writing belongs to the user (made with ujust configure-beesd).
+if [[ -e "$conf" && ! -e "$CREATING" ]]; then
+	echo "$conf already exists; leaving it alone"
+	touch "$STAMP"
+	exit 0
+fi
+
+# Nearest whole TB, kept within bounds so the hash table cannot eat the machine's memory.
+size_tb=$(((size_bytes + 500000000000) / 1000 ** 4))
+size_tb=$((size_tb < MIN_FS_TB ? MIN_FS_TB : size_tb))
+size_tb=$((size_tb > MAX_FS_TB ? MAX_FS_TB : size_tb))
+db_size=$((size_tb * HASH_SIZE_MB_PER_TB * 1024 ** 2))
+mem_thresh_mb=$((db_size / 1024 ** 2))
+
+# Rendered before anything is written: a missing sample must not leave an empty config behind,
+# which `ujust configure-beesd` would list as configured.
+conf_text="$(sed -e "s/^UUID=.*/UUID=${uuid}/" \
+	-e "s/# DB_SIZE=.*/DB_SIZE=${db_size}/" \
+	-e 's/# OPTIONS=.*/OPTIONS="--strip-paths --no-timestamps --thread-factor 0.125 --thread-min 1 --throttle-factor 100"/' \
+	"$SAMPLE")"
+mkdir -p "$BEES_DIR" "$dropin_dir"
+# Only now, right before the config appears: if nothing got written, a config that shows up later
+# is the user's.
+touch "$CREATING"
+printf '%s\n' "$conf_text" >"$conf"
+# The hash table is held in memory while bees runs, so only start with more than that available.
+# Per instance, because the size differs per filesystem.
+cat >"$dropin_dir/override.conf" <<EOF
+[Service]
+ExecCondition=/bin/sh -c "test \$(free -m | awk '/^Mem:/ {print \$7}') -gt ${mem_thresh_mb}"
+EOF
+
+systemctl daemon-reload
+# --no-block: a boot-time unit must not sit waiting on another unit's start job.
+systemctl enable --now --no-block "beesd@$uuid.timer"
+touch "$STAMP"
+rm -f "$CREATING"

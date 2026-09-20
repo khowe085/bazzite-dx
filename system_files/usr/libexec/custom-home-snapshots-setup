@@ -1,0 +1,47 @@
+#!/usr/bin/bash
+# What the Bazzite Portal's "Configure btrfs snapshots" does (/usr/libexec/bazzite-snapper-config
+# enable), minus its dialogs and with a retention already chosen. custom-home-snapshots.service runs
+# this at every boot; it acts once and then stays out of the way, so snapshots switched off later
+# with ujust or the Portal stay off.
+set -euo pipefail
+
+TARGET=/var/home
+STAMP="${STATE_DIRECTORY:?is set by the systemd unit}/done"
+CREATING="$STATE_DIRECTORY/creating"
+
+# Bazzite's tooling works on snapper's default config, "root", even though it covers /var/home.
+snap() { snapper -c root "$@"; }
+config_exists() { snap get-config >/dev/null 2>&1; }
+
+if [[ -e "$STAMP" ]]; then
+	exit 0
+fi
+fstype="$(findmnt -no FSTYPE --target "$TARGET")"
+if [[ "$fstype" != btrfs ]]; then
+	echo "$TARGET is on ${fstype}, not btrfs; nothing to snapshot"
+	exit 0
+fi
+
+# A config we did not start creating belongs to the user (made in the Portal or by hand).
+if config_exists && [[ ! -e "$CREATING" ]]; then
+	echo "a snapper config already exists; leaving it alone"
+	touch "$STAMP"
+	exit 0
+fi
+
+if ! config_exists; then
+	snap create-config "$TARGET"
+	# Only once the config is there: after a failed create, a config that shows up later is the user's.
+	touch "$CREATING"
+fi
+# 5 hourly and 7 daily timeline snapshots, and the 10 newest of those marked for number cleanup.
+# Anything a snapshot still references keeps its disk space until that snapshot ages out.
+snap set-config \
+	TIMELINE_CREATE=yes TIMELINE_CLEANUP=yes TIMELINE_MIN_AGE=1800 \
+	TIMELINE_LIMIT_HOURLY=5 TIMELINE_LIMIT_DAILY=7 TIMELINE_LIMIT_WEEKLY=0 TIMELINE_LIMIT_MONTHLY=0 \
+	TIMELINE_LIMIT_QUARTERLY=0 TIMELINE_LIMIT_YEARLY=0 \
+	NUMBER_CLEANUP=yes NUMBER_MIN_AGE=1800 NUMBER_LIMIT=10 NUMBER_LIMIT_IMPORTANT=10
+# --no-block: a boot-time unit must not sit waiting on another unit's start job.
+systemctl enable --now --no-block snapper-timeline.timer snapper-cleanup.timer
+touch "$STAMP"
+rm -f "$CREATING"
