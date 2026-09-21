@@ -69,6 +69,8 @@ check "no file is made up" test ! -e "$tmp/kdeglobals"
 
 # KWin reads per-device-type input defaults from [Libinput][Defaults][<type>] in kcminputrc. A
 # touchpad gets the Touchpad group, every other pointing device (mice included) the Pointer group.
+# KWin asks "is it a keyboard?" first, so a keyboard with a built-in touchpad or trackball that
+# shows up as one device gets the Keyboard group, and only that one.
 input_default() { # input_default <type>: prints the lines of that type's defaults group
 	sed -n "/^\[Libinput\]\[Defaults\]\[$1\]\$/,/^\[/p" "$tmp/kcminputrc" | grep -v '^\[' | grep .
 }
@@ -78,6 +80,7 @@ rm -f "$tmp/kcminputrc"
 check "build step exits 0" run_step
 check "touchpads scroll naturally by default" test "$(input_default Touchpad)" = "NaturalScroll=true"
 check "mice scroll naturally by default" test "$(input_default Pointer)" = "NaturalScroll=true"
+check "so do pointing devices built into a keyboard" test "$(input_default Keyboard)" = "NaturalScroll=true"
 
 echo "== natural scrolling, the base ships a kcminputrc of its own (here without a final newline)"
 write_bazzite_kdeglobals

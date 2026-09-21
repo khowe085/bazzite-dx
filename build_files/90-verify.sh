@@ -87,19 +87,24 @@ check "bazzite-flatpak-manager.service still exists in the base" test -f /usr/li
 echo "== KDE defaults"
 LNF=org.fedoraproject.fedoradark.desktop
 UPDATES_DIR=/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates
-POTD_SCRIPT="$UPDATES_DIR/picture-of-the-day-wallpaper.js"
+POTD_SCRIPT="$UPDATES_DIR/picture-of-the-day-default.js"
 check "Fedora Dark is the default global theme" grep -qx "LookAndFeelPackage=$LNF" /etc/xdg/kdeglobals
 check "kdeglobals names one global theme only" test "$(grep -c '^LookAndFeelPackage=' /etc/xdg/kdeglobals)" = 1
 check "the base ships that theme" test -f "/usr/share/plasma/look-and-feel/$LNF/metadata.json"
 check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=false' /etc/xdg/kdeglobals
 check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
 check "in the directory the base uses for its own Plasma update script" test -f "$UPDATES_DIR/bazzite-pins.js"
+# Bazzite's Vapor theme writes its wallpaper into every profile it sets up; the script has to know
+# that exact value to tell it from a picture the user chose.
+VAPOR_WALLPAPER=/usr/share/wallpapers/convergence.jxl
+check "Bazzite's Vapor theme still gives new profiles that wallpaper" grep -Fq "writeConfig(\"Image\", \"$VAPOR_WALLPAPER\")" /usr/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/plasmoidsetupscripts/org.kde.plasma.folder.js
+check "and the script counts it as untouched" grep -Fq "\"$VAPOR_WALLPAPER\"" "$POTD_SCRIPT"
 check "the script selects the Picture of the Day wallpaper" grep -q 'wallpaperPlugin = "org.kde.potd"' "$POTD_SCRIPT"
 check "with the Astronomy (NASA) provider" grep -q 'writeConfig("Provider", "apod")' "$POTD_SCRIPT"
 check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.potd/metadata.json
 check "and that provider" test -f /usr/lib64/qt6/plugins/potd/plasma_potd_apodprovider.so
 # Read back with KDE's own parser: KWin's Touchpad group covers touchpads, Pointer the other pointing devices.
-for type in Touchpad Pointer; do
+for type in Touchpad Pointer Keyboard; do
 	check "natural scrolling is the default for $type devices" test "$(kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$type" --key NaturalScroll)" = true
 done
 
@@ -182,7 +187,8 @@ check "Bazzite's beesd recipe still sizes the hash table the same way" bash -c "
 check "and still passes bees the same options" grep -rqF -- '--strip-paths --no-timestamps --thread-factor 0.125 --thread-min 1 --throttle-factor 100' "$JUST_DIR"
 BEES_MEMORY_TEST="free -m | awk '/^Mem:/ {print \\\$7}') -gt \${mem_thresh_mb}"
 check "and still holds bees back with the same memory test" grep -rqF -- "$BEES_MEMORY_TEST" "$JUST_DIR"
-check "base still ends a bees run after 30 minutes, as the README says" grep -rq 'timeout 30m /usr/bin/beesd' /etc/systemd/system/beesd@.service.d/
+# Not override.conf: the per-filesystem override.conf the dedup setup writes masks the base's file of that name.
+check "base still ends a bees run after 30 minutes, as the README says" grep -q 'timeout 30m /usr/bin/beesd' /etc/systemd/system/beesd@.service.d/bees-timeout.conf
 
 echo "== Bazzite Portal selections: per user"
 TWEAKS_HOOK=/usr/share/ublue-os/user-setup.hooks.d/35-portal-tweaks.sh
