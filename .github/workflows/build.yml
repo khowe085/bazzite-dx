@@ -15,6 +15,15 @@ on:
 
 env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
+  # Publish from the default branch, and from pull requests under a pr-<number> tag so they can be
+  # booted before merging. Not from forks (they must not publish under this name) and not from
+  # Dependabot (its runs get no SIGNING_SECRET, so signing would fail every one of its PRs).
+  PUBLISH: >-
+    ${{ (github.event_name != 'pull_request'
+    && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    || (github.event_name == 'pull_request'
+    && github.event.pull_request.head.repo.full_name == github.repository
+    && github.event.pull_request.user.login != 'dependabot[bot]') }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}
@@ -100,10 +109,17 @@ jobs:
 
       - name: Generate Build Tags
         id: gen-build-tags
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          alias_tags="$(just generate-build-tags \
-                        ${IMAGE_NAME} \
-                        ${DEFAULT_TAG})"
+          if [[ -n "${PR_NUMBER}" ]]; then
+            # A pull request must never take over "latest"; one moving tag is what gets booted to test it.
+            alias_tags="pr-${PR_NUMBER}"
+          else
+            alias_tags="$(just generate-build-tags \
+                          ${IMAGE_NAME} \
+                          ${DEFAULT_TAG})"
+          fi
 
           echo "Tags for this Action..."
           echo "${alias_tags}"
@@ -119,18 +135,18 @@ jobs:
             "${DEFAULT_TAG}" \
             "${ALIAS_TAGS}"
 
-      # These `if` statements are so that pull requests for your custom images do not make it publish any packages under your name without you knowing
-      # They also check if the runner is on the default branch so that things like the merge queue (if you enable it), are going to work
+      # PUBLISH (see env above) decides whether this run may publish under your name: the default
+      # branch, and this repository's own pull requests under their pr-<number> tag.
       - name: Login to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: env.PUBLISH == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push To GHCR
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: env.PUBLISH == 'true'
         id: push-image
         env:
           ALIAS_TAGS: ${{ steps.gen-build-tags.outputs.alias_tags }}
@@ -150,14 +166,14 @@ jobs:
       # to consume. For more details, review the image signing section of the README.
       - name: Install Cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: env.PUBLISH == 'true'
         with:
           # be careful when upgrading major versions
           cosign-release: 'v3.1.2'
 
       - name: Sign container image
         id: sign-image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: env.PUBLISH == 'true'
         env:
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
@@ -167,4 +183,17 @@ jobs:
           # https://github.com/coreos/rpm-ostree/issues/5509
           # use old bundle format, so we can use newer cosign 3.X.X instead of 2.X.X
           cosign sign -y --new-bundle-format=false --use-signing-config=false --key env://COSIGN_PRIVATE_KEY ${IMAGE_REGISTRY}/${IMAGE_NAME}@${DIGEST}
+
+      - name: Say how to boot this pull request's image
+        if: env.PUBLISH == 'true' && github.event_name == 'pull_request'
+        env:
+          ALIAS_TAGS: ${{ steps.gen-build-tags.outputs.alias_tags }}
+        run: |
+          {
+            echo "Test this build with:"
+            echo '```'
+            echo "sudo bootc switch ${IMAGE_REGISTRY}/${IMAGE_NAME}:${ALIAS_TAGS}"
+            echo '```'
+            echo "and go back with \`sudo bootc switch ${IMAGE_REGISTRY}/${IMAGE_NAME}:latest\` once it is merged."
+          } >> "$GITHUB_STEP_SUMMARY"
 

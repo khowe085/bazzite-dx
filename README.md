@@ -206,6 +206,21 @@ Sunshine, Boxtron, Netflix, Crunchyroll, and adding the media apps to Steam.
 
    then reboot.
 
+## Testing a pull request on the machine
+
+The workflow also publishes and signs every pull request opened from a branch of this repository, under
+the tag `pr-<number>` (never `latest`). Forks and Dependabot pull requests are built and tested but not
+published. The run's summary page shows the command:
+
+```bash
+sudo bootc switch ghcr.io/khowe085/bazzite-dx:pr-5
+```
+
+Reboot into it; `sudo bootc upgrade` follows later pushes to the same pull request. After the merge, go
+back with `sudo bootc switch ghcr.io/khowe085/bazzite-dx:latest`, or the machine stays on the stale
+`pr-<number>` tag. `sudo bootc rollback` returns to the deployment you came from if the test image does
+not boot. Old `pr-<number>` tags stay in the registry until you delete them on the package's page.
+
 ## Building and testing locally
 
 ```bash
