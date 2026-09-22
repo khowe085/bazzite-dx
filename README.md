@@ -18,8 +18,8 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
 | Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
-| Bazzite Portal selections | Cockpit, CoolerControl, DisplayLink, virtualization, Framework fan control, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3 and JetBrains Toolbox, switched on up front (see below) |
-| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `claude`, created at first login and exported to the menu (see below) |
+| Bazzite Portal selections | Cockpit, DisplayLink, virtualization, Framework fan control, HDMI 2.1 on AMD, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3, JetBrains Toolbox, LM Studio and Crunchyroll, switched on up front (see below) |
+| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below) |
 | SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
 
 The last build step, `build_files/90-verify.sh`, checks all of the above and fails the build otherwise.
@@ -107,7 +107,8 @@ default in the Containerfile (the `just build` recipe passes no build args).
 ## Claude Desktop
 
 Anthropic only ships Claude Desktop for Debian and Ubuntu, so it lives in an Ubuntu
-[distrobox](https://distrobox.it/) instead of the image:
+[distrobox](https://distrobox.it/) instead of the image. The box is called `ubuntu`, the name the base's
+own `distrobox.ini` uses for the same image, and is a general-purpose Ubuntu box apart from that:
 
 - The box is defined in `/usr/share/claude-distrobox/claude.ini`: image `ghcr.io/ublue-os/ubuntu-toolbox`,
   `claude-desktop` exported to the menu. The build also appends that entry to `/etc/distrobox/apps.ini`,
@@ -121,44 +122,55 @@ Anthropic only ships Claude Desktop for Debian and Ubuntu, so it lives in an Ubu
   part-way is finished at the next login, not rebuilt. Follow it with
   `journalctl --user -u claude-distrobox-setup`.
 
-Updates arrive through apt inside the box (`distrobox upgrade claude`). To rebuild the box from scratch:
+Updates arrive through apt inside the box (`distrobox upgrade ubuntu`). To rebuild the box from scratch:
 
 ```bash
 distrobox assemble create --replace --file /usr/share/claude-distrobox/claude.ini
 ```
 
-`ujust setup-distrobox-app claude` does the same from `/etc/distrobox/apps.ini`, but silently does nothing
+`ujust setup-distrobox-app ubuntu` does the same from `/etc/distrobox/apps.ini`, but silently does nothing
 if you have edited that file, because an edited `/etc` file keeps its old contents across image updates.
-A box you remove (`distrobox rm claude`) stays removed. To have the next login create it again, remove
-the box first and then delete `~/.local/state/claude-distrobox.created`; with a box still present the
-setup treats it as yours and leaves it alone.
+A box you remove (`distrobox rm ubuntu`) stays removed. To have the next login create it again, remove
+the box first and then delete `~/.local/state/ubuntu-distrobox.created`; with a box still present the
+setup treats it as yours and leaves it alone. That includes an `ubuntu` box you made yourself before the
+first login: it is never touched, so it gets no Claude Desktop.
+
+Bazzite's `ujust assemble` also offers a box called `ubuntu`, a plain one from `/etc/distrobox/distrobox.ini`,
+and always replaces an existing box of that name. Choosing it there (or "ALL") swaps this box for one
+without Claude Desktop, and the stamp keeps the login hook from bringing it back; use the rebuild command
+above instead.
+
+Earlier images called the box `claude`. A machine that still has that one gets the `ubuntu` box next to
+it (a second download), and the menu shows Claude Desktop twice, "(on claude)" and "(on ubuntu)", until
+you remove the old one with `distrobox rm claude`.
 
 ## Bazzite Portal selections
 
 Entries of the Bazzite Portal, plus one `ujust` recipe, that this image switches on up front. Each is
-done the way its recipe does it, so the Portal and `ujust` still show and toggle them. The two package
-installs are the exception: the Portal only recognises layered packages, so it keeps listing
-CoolerControl and DisplayLink as not installed. Ignore its offer to install them.
+done the way its recipe does it, so the Portal and `ujust` still show and toggle them. The package
+install is the exception: the Portal only recognises layered packages, so it keeps listing DisplayLink
+as not installed. Ignore its offer to install it.
 
 | Portal entry | In this image |
 |---|---|
 | Enable Cockpit | `cockpit.service` enabled, reachable from the machine itself only (`http://localhost:9090`): the firewalld policy `cockpit-local-only` rejects port 9090 from every zone, which covers other machines, VMs and Tailscale peers, while loopback traffic never reaches a policy. Its login goes over SSH to localhost, so it lets nobody in until SSH is on too (`ujust ssh enable`, the Portal's "Enable SSH remote access"), which this image leaves off |
 | Enable Tailscale | `tailscaled` enabled (see the table above) |
-| CoolerControl | `coolercontrol` and `liquidctl` from Terra, with the `coolercontrold` daemon enabled |
 | Install support for DisplayLink | negativo17's `displaylink`; the `evdi` kernel module is part of Bazzite |
 | Android Platform Tools | Nothing to do: bazzite-dx ships `android-tools` |
 | Enable visible password asterisks in CLI | `/etc/sudoers.d/enable-pwfeedback` |
 | Setup virtualization | bazzite-dx ships QEMU, libvirt and virt-manager and adds users to the `libvirt` group. Added here: `libvirtd` enabled, Bazzite's one-time `bazzite-libvirtd-setup.service`, the kernel arguments `kvm.ignore_msrs=1 kvm.report_ignored_msrs=0` (`/usr/lib/bootc/kargs.d/10-kvm-msrs.toml`) and `/var/lib/swtpm-localca` for emulated TPMs |
-| `ujust enable-framework-fan-control` | `fw-fanctrl.service` enabled |
+| `ujust enable-framework-fan-control` | `fw-fanctrl.service` enabled (the package is part of Bazzite). Nothing else in the image drives the fan |
+| Enable HDMI 2.1 for AMD graphics cards | The kernel argument `amdgpu.dcfeaturemask=0x402` (`/usr/lib/bootc/kargs.d/20-amdgpu-hdmi21.toml`). The Portal warns that it can cause flickering or an unstable signal on some displays |
 | Configure btrfs snapshots | First boot: a Snapper config for `/var/home` under Bazzite's config name `root`, keeping 5 hourly and 7 daily timeline snapshots and the 10 newest of those marked for Snapper's `number` cleanup, with the timeline and cleanup timers on. A snapshot taken without a cleanup algorithm stays until you delete it. A config that already exists is left alone. Restore with Btrfs Assistant |
 | Setup btrfs deduplication | First boot: a `beesd` config for the filesystem behind `/var/home` with the recipe's sizing and options, and its daily timer (at most 30 minutes a run, only with enough free memory). A config that already exists is left alone |
 | Clean Steam desktop icons automatically | First login: `steam-icons-cleanup.service` enabled for the user |
 | Enable globally upgrading FSR3.1+ to FSR4 (RDNA3) | First login: `~/.config/environment.d/99-proton-fsr4-rdna3.conf`. Only Proton-GE, Proton-EM and similar builds act on it |
-| JetBrains Toolbox | First login: the Portal's Homebrew cask install, detached; follow it with `journalctl --user -u jetbrains-toolbox-setup`. Retried at each login until it has worked once |
+| JetBrains Toolbox, LM Studio | First login: the Portal's Homebrew cask installs, one after the other in a detached unit; follow it with `journalctl --user -u portal-brew-casks-setup`. Each is retried at every login until it has worked once |
 | Get Media Apps: YouTube, Jellyfin | The VacuumTube and Jellyfin Desktop Flatpaks |
+| Get Media Apps: Crunchyroll | First login: the AppImage the Portal downloads (github.com/aarron-lee/crunchyroll-linux, an unofficial client), placed at `~/Applications/Crunchyroll.AppImage` with a menu entry instead of being handed to Gear Lever. Placed once; move or delete it and it stays that way |
 
 Still done by hand in the Portal, because their recipes need a desktop session or a running Steam:
-Sunshine, Boxtron, Netflix, Crunchyroll, and adding the media apps to Steam.
+Sunshine, Boxtron, Netflix, and adding the media apps to Steam.
 
 - Everything under "first boot" and "first login" is applied once. Switch it off in the Portal or with
   `ujust` and it stays off. To apply it again, delete the stamp and start the unit
@@ -180,11 +192,12 @@ Sunshine, Boxtron, Netflix, Crunchyroll, and adding the media apps to Steam.
   ```
 
   then `sudo firewall-cmd --reload`.
-- CoolerControl and `fw-fanctrl` can both drive the Framework's fan. Leave the fan on CoolerControl's
-  default profile, or turn one of the two off.
 - Kernel arguments from `kargs.d` are applied by `bootc switch` and `bootc upgrade`. Check
   `cat /proc/cmdline`; if they are missing, `rpm-ostree kargs --append-if-missing=kvm.ignore_msrs=1
-  --append-if-missing=kvm.report_ignored_msrs=0` adds them.
+  --append-if-missing=kvm.report_ignored_msrs=0` adds them (same for `amdgpu.dcfeaturemask=0x402`).
+- If the screen flickers with the HDMI 2.1 argument, take it out with
+  `sudo rpm-ostree kargs --delete-if-present=amdgpu.dcfeaturemask=0x402` and reboot; bootc only
+  re-applies `kargs.d` entries when they change.
 
 ## Setting up the repository
 

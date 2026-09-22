@@ -5,7 +5,7 @@
 #   journalctl --user -u claude-distrobox-setup
 set -euo pipefail
 
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/claude-distrobox.created"
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/ubuntu-distrobox.created"
 if [[ -e "$STAMP" ]]; then
 	exit 0
 fi

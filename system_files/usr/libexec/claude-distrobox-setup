@@ -1,16 +1,17 @@
 #!/usr/bin/bash
-# Creates the "claude" distrobox for the calling user and exports Claude Desktop to the menu.
+# Creates the "ubuntu" distrobox for the calling user and exports Claude Desktop from it to the menu.
 # Started detached by user-setup.hooks.d/40-claude-distrobox.sh; safe to run again at any point.
 set -euo pipefail
 
-BOX=claude
+BOX=ubuntu
 APP=claude-desktop
 # The copy under /usr, not /etc/distrobox/apps.ini: ostree keeps a locally edited /etc file as it is
 # across image updates, and assemble exits 0 without doing anything when the section is missing.
 MANIFEST=/usr/share/claude-distrobox/claude.ini
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
-STAMP="$STATE_DIR/claude-distrobox.created"
-CREATING="$STATE_DIR/claude-distrobox.creating"
+# Named after the box: a machine that still has the earlier "claude" box and its stamp gets this one too.
+STAMP="$STATE_DIR/ubuntu-distrobox.created"
+CREATING="$STATE_DIR/ubuntu-distrobox.creating"
 
 box_exists() {
 	# Same test distrobox-assemble uses. Captured first: under pipefail a `list | grep -q` can fail

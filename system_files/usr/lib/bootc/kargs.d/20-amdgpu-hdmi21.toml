@@ -1,0 +1,4 @@
+# The kernel argument `ujust configure-amd-hdmi21 enable` adds (Bazzite Portal: "Enable HDMI 2.1 for
+# AMD graphics cards"). The Portal warns that it can cause flickering or an unstable signal on some
+# displays; `sudo rpm-ostree kargs --delete-if-present=amdgpu.dcfeaturemask=0x402` takes it out again.
+kargs = ["amdgpu.dcfeaturemask=0x402"]

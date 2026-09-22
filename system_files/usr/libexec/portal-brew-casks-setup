@@ -1,0 +1,47 @@
+#!/usr/bin/bash
+# Installs, for the calling user, the Homebrew casks this image takes from the Bazzite Portal
+# (JetBrains Toolbox, LM Studio), the way the Portal's entries do. Started detached by
+# user-setup.hooks.d/35-portal-tweaks.sh at every login until each has succeeded once; a cask
+# uninstalled later (brew uninstall --cask) stays uninstalled.
+#   portal-brew-casks-setup --pending   exits 0 if a cask is still to be installed, without doing it
+set -euo pipefail
+
+BREW="${PORTAL_BREW:-/home/linuxbrew/.linuxbrew/bin/brew}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/portal-tweaks"
+# cask:stamp. jetbrains-toolbox is the stamp earlier images wrote, so it keeps that name.
+CASKS=(jetbrains-toolbox-linux:jetbrains-toolbox lm-studio-linux:lm-studio)
+
+pending=()
+for entry in "${CASKS[@]}"; do
+	if [[ ! -e "$STATE_DIR/${entry#*:}" ]]; then
+		pending+=("$entry")
+	fi
+done
+if [[ "${1:-}" == --pending ]]; then
+	if ((${#pending[@]} > 0)); then exit 0; else exit 1; fi
+fi
+if ((${#pending[@]} == 0)); then
+	exit 0
+fi
+
+if [[ ! -x "$BREW" ]]; then
+	echo "Homebrew is not at $BREW yet (brew-setup.service unpacks it); retrying at the next login" >&2
+	exit 1
+fi
+# Assigned first: `eval "$(...)"` would swallow a failing shellenv.
+brew_env="$("$BREW" shellenv)"
+eval "$brew_env"
+brew trust ublue-os/tap
+brew tap ublue-os/tap
+
+mkdir -p "$STATE_DIR"
+rc=0
+for entry in "${pending[@]}"; do
+	if brew install --cask "${entry%%:*}"; then
+		touch "$STATE_DIR/${entry#*:}"
+	else
+		echo "${entry%%:*} was not installed; retrying at the next login" >&2
+		rc=1
+	fi
+done
+exit "$rc"
