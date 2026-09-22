@@ -12,7 +12,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/bin" "$tmp/home"
 
-# `list` prints distrobox's real table, with a claude row once $STATE/box exists.
+# `list` prints distrobox's real table, with an ubuntu row once $STATE/box exists.
 # `assemble` modes (DBX_ASSEMBLE): ok (default) creates the box; noop exits 0 without creating, as
 # distrobox does when the manifest lacks the section; fail-early fails before a box exists;
 # fail-late creates the box and then fails, as a failed init or export does.
@@ -23,9 +23,9 @@ echo "$*" >>"$CALLS"
 case "$1" in
 list)
 	printf '%-12s | %-20s | %-18s | %-30s\n' ID NAME STATUS IMAGE
-	printf '%-12s | %-20s | %-18s | %-30s\n' 0123456789ab claude-code "Up 2 hours" ghcr.io/ublue-os/fedora-toolbox:latest
+	printf '%-12s | %-20s | %-18s | %-30s\n' 0123456789ab ubuntu-dev "Up 2 hours" ghcr.io/ublue-os/fedora-toolbox:latest
 	if [[ -e "$STATE/box" ]]; then
-		printf '%-12s | %-20s | %-18s | %-30s\n' ba9876543210 claude "Up 1 minute" ghcr.io/ublue-os/ubuntu-toolbox:latest
+		printf '%-12s | %-20s | %-18s | %-30s\n' ba9876543210 ubuntu "Up 1 minute" ghcr.io/ublue-os/ubuntu-toolbox:latest
 	fi
 	;;
 assemble)
@@ -67,10 +67,10 @@ reset() {
 	mkdir -p "$tmp/home"
 	: >"$tmp/calls.log"
 }
-stamp="$tmp/state/claude-distrobox.created"
-creating="$tmp/state/claude-distrobox.creating"
-ASSEMBLE='assemble create --file /usr/share/claude-distrobox/claude.ini --name claude'
-EXPORT='enter claude -- distrobox-export --app claude-desktop'
+stamp="$tmp/state/ubuntu-distrobox.created"
+creating="$tmp/state/ubuntu-distrobox.creating"
+ASSEMBLE='assemble create --file /usr/share/claude-distrobox/claude.ini --name ubuntu'
+EXPORT='enter ubuntu -- distrobox-export --app claude-desktop'
 
 echo "== first run"
 reset
@@ -83,7 +83,7 @@ check "the in-progress marker is gone once the box is done" test ! -e "$creating
 echo "== XDG_STATE_HOME unset: state goes under ~/.local/state"
 reset
 check "setup exits 0" run_setup_without_xdg_state_home
-check "stamped under ~/.local/state" test -e "$tmp/home/.local/state/claude-distrobox.created"
+check "stamped under ~/.local/state" test -e "$tmp/home/.local/state/ubuntu-distrobox.created"
 reset
 check "setup exits 0" run_setup
 
@@ -92,7 +92,7 @@ echo "== later runs"
 check "setup exits 0" run_setup
 check "distrobox is not even queried once stamped" test ! -s "$tmp/calls.log"
 
-echo "== a box named claude already exists (made by hand or via ujust)"
+echo "== a box named ubuntu already exists (made by hand or via ujust)"
 reset
 touch "$tmp/box"
 check "setup exits 0" run_setup
@@ -102,7 +102,7 @@ check "stamped so later logins skip the check" test -e "$stamp"
 echo "== a box with a similar name does not count as existing"
 reset
 check "setup exits 0" run_setup
-check "claude-code in the list did not stop the assemble" grep -qx "$ASSEMBLE" "$tmp/calls.log"
+check "ubuntu-dev in the list did not stop the assemble" grep -qx "$ASSEMBLE" "$tmp/calls.log"
 
 echo "== assemble exits 0 without creating anything (manifest lacks the section)"
 reset

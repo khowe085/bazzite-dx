@@ -5,13 +5,9 @@ set -euxo pipefail
 
 # Manage Bazzite -> Enable Cockpit (ujust cockpit enable)
 systemctl enable cockpit.service
-# ujust enable-framework-fan-control
+# ujust enable-framework-fan-control. The fan is fw-fanctrl's alone: CoolerControl, which can drive
+# it too, was taken out again.
 systemctl enable fw-fanctrl.service
-
-# Install Applications -> CoolerControl. The recipe layers these two packages from Terra and leaves
-# the daemon off, without which the app only shows a connection error.
-dnf5 -y install --enable-repo=terra liquidctl coolercontrol
-systemctl enable coolercontrold.service
 
 # Tweak System -> Install support for DisplayLink. The recipe layers this package from negativo17;
 # the evdi kernel module it drives is already in the base.

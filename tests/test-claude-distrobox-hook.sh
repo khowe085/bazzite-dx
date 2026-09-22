@@ -51,7 +51,7 @@ check "hook still exits 0 when systemd-run refuses the duplicate unit" run_hook 
 
 echo "== box already created (stamp under XDG_STATE_HOME)"
 : >"$tmp/calls.log"
-touch "$tmp/state/claude-distrobox.created"
+touch "$tmp/state/ubuntu-distrobox.created"
 check "hook exits 0" run_hook
 check "no unit is started" test ! -s "$tmp/calls.log"
 
@@ -60,7 +60,7 @@ echo "== XDG_STATE_HOME unset: the stamp is looked up under ~/.local/state"
 check "hook exits 0" run_hook_without_xdg_state_home
 check "stamp under XDG_STATE_HOME is not consulted, so the unit starts" grep -qx -- "$LAUNCH" "$tmp/calls.log"
 : >"$tmp/calls.log"
-touch "$tmp/home/.local/state/claude-distrobox.created"
+touch "$tmp/home/.local/state/ubuntu-distrobox.created"
 check "hook exits 0" run_hook_without_xdg_state_home
 check "stamp under ~/.local/state stops it" test ! -s "$tmp/calls.log"
 

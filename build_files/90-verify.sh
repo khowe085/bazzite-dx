@@ -149,11 +149,9 @@ check "it rejects Cockpit's port" cockpit_policy --query-rich-rule='rule port po
 check "it is consulted before the zones, which may allow the port" bash -c 'firewall-offline-cmd --info-policy=cockpit-local-only | grep -Eq "^ *priority: -[0-9]+$"'
 check "base still runs Cockpit with no port of its own choosing, so on 9090" bash -c 'f=/usr/share/containers/systemd/cockpit-container.container; grep -qx "Exec=/container/label-run" "$f" && ! grep -q "^PublishPort=" "$f"'
 check "fw-fanctrl.service enabled" systemctl is-enabled fw-fanctrl.service
-check "coolercontrol and liquidctl installed" rpm -q coolercontrol liquidctl
-check "coolercontrold.service enabled" systemctl is-enabled coolercontrold.service
+check "CoolerControl is not in the image, so nothing competes with fw-fanctrl for the fan" bash -c '! rpm -q coolercontrol'
 check "displaylink installed" rpm -q displaylink
 check "the base has an evdi kernel module for displaylink to drive" bash -c 'find /usr/lib/modules -name "evdi.ko*" | grep -q .'
-check "Terra is still disabled after installing from it" bash -c 'dnf5 repolist --disabled | grep -q "^terra "'
 check "negativo17 is still disabled after installing from it" bash -c 'dnf5 repolist --disabled | grep -q "fedora-multimedia"'
 check "adb comes with the base (the Portal's Android Platform Tools)" command -v adb
 check "sudo shows asterisks while a password is typed" grep -qx 'Defaults pwfeedback' /etc/sudoers.d/enable-pwfeedback
@@ -163,6 +161,8 @@ check "libvirtd.service enabled" systemctl is-enabled libvirtd.service
 check "bazzite-libvirtd-setup.service enabled" systemctl is-enabled bazzite-libvirtd-setup.service
 check "kargs.d carries the recipe's KVM arguments" grep -qx 'kargs = \["kvm.ignore_msrs=1", "kvm.report_ignored_msrs=0"\]' /usr/lib/bootc/kargs.d/10-kvm-msrs.toml
 check "the recipe still sets exactly those two" bash -c "test \"\$(grep -rhoE -- '--append-if-missing=\"?kvm\.[a-z_]+=[0-9]+' $JUST_DIR | sort -u | wc -l)\" = 2"
+check "kargs.d carries the recipe's AMD HDMI 2.1 argument" grep -qx 'kargs = \["amdgpu.dcfeaturemask=0x402"\]' /usr/lib/bootc/kargs.d/20-amdgpu-hdmi21.toml
+check "ujust configure-amd-hdmi21 still sets that argument" grep -rq -- '--append-if-missing=amdgpu.dcfeaturemask=0x402' "$JUST_DIR"
 check "tmpfiles.d creates the swtpm CA directory" grep -qx 'd /var/lib/swtpm-localca 0750 tss root -' /usr/lib/tmpfiles.d/swtpm-localca.conf
 check "its owner exists" getent passwd tss
 
@@ -192,13 +192,20 @@ check "base still ends a bees run after 30 minutes, as the README says" grep -q 
 
 echo "== Bazzite Portal selections: per user"
 TWEAKS_HOOK=/usr/share/ublue-os/user-setup.hooks.d/35-portal-tweaks.sh
-TOOLBOX_SETUP=/usr/libexec/jetbrains-toolbox-setup
-check "hook launches the JetBrains Toolbox setup" grep -Fq " $TOOLBOX_SETUP" "$TWEAKS_HOOK"
+CASKS_SETUP=/usr/libexec/portal-brew-casks-setup
+check "hook knows where the brew casks setup is" grep -Fq ":-$CASKS_SETUP}" "$TWEAKS_HOOK"
+check "and starts it as a detached unit" grep -Fq -- '--unit=portal-brew-casks-setup "$CASKS_SETUP"' "$TWEAKS_HOOK"
 check "base still ships the Steam icon cleanup user unit" test -f /usr/lib/systemd/user/steam-icons-cleanup.service
 check "ujust global-fsr4-rdna3 still uses the same file and variable" bash -c "grep -rq '99-proton-fsr4-rdna3.conf' $JUST_DIR && grep -rq 'PROTON_FSR4_RDNA3_UPGRADE=1' $JUST_DIR"
-check "the Portal still installs JetBrains Toolbox with the same brew steps" grep -Fq 'brew trust ublue-os/tap && brew tap ublue-os/tap && brew install --cask jetbrains-toolbox-linux' /usr/share/yafti/yafti.yml
+for cask in jetbrains-toolbox-linux lm-studio-linux; do
+	check "the Portal still installs $cask with the same brew steps" grep -Fq "brew trust ublue-os/tap && brew tap ublue-os/tap && brew install --cask $cask'" /usr/share/yafti/yafti.yml
+	check "and the setup script installs it" grep -q "^CASKS=.*[( ]$cask:" "$CASKS_SETUP"
+done
 check "brew-setup.service, which unpacks Homebrew, is enabled in the base" systemctl is-enabled brew-setup.service
-for script in "$SNAP_SETUP" "$DEDUP_SETUP" "$TWEAKS_HOOK" "$TOOLBOX_SETUP"; do
+CRUNCHYROLL_HOOK=/usr/share/ublue-os/user-setup.hooks.d/45-crunchyroll.sh
+check "the Portal still gets Crunchyroll from the project the hook downloads from" grep -rqF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$JUST_DIR"
+check "and the hook asks the same place" grep -qF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$CRUNCHYROLL_HOOK"
+for script in "$SNAP_SETUP" "$DEDUP_SETUP" "$TWEAKS_HOOK" "$CASKS_SETUP" "$CRUNCHYROLL_HOOK"; do
 	check "$script is executable" test -x "$script"
 	check "$script parses" bash -n "$script"
 done
@@ -213,14 +220,16 @@ check "distrobox is available in the base" command -v distrobox
 check "systemd-run is available for the detached setup" command -v systemd-run
 check "base still offers ujust setup-distrobox-app" grep -rq "setup-distrobox-app" /usr/share/ublue-os/just/
 in_manifest() { grep -Fx -- "$1" "$CLAUDE_INI"; }
-check "manifest defines the claude box" in_manifest '[claude]'
-check "claude box uses the ublue Ubuntu toolbox image" in_manifest 'image=ghcr.io/ublue-os/ubuntu-toolbox:latest'
-check "claude box runs the install script from the host image" in_manifest "init_hooks=\"/run/host$CLAUDE_INIT\""
-check "claude box exports the app to the menu" in_manifest 'exported_apps="claude-desktop"'
+check "manifest defines the ubuntu box" in_manifest '[ubuntu]'
+check "the box uses the ublue Ubuntu toolbox image" in_manifest 'image=ghcr.io/ublue-os/ubuntu-toolbox:latest'
+check "the box runs the Claude install script from the host image" in_manifest "init_hooks=\"/run/host$CLAUDE_INIT\""
+check "the box exports Claude Desktop to the menu" in_manifest 'exported_apps="claude-desktop"'
 check "setup reads that manifest" grep -Fqx "MANIFEST=$CLAUDE_INI" "$CLAUDE_SETUP"
+# assemble exits 0 without creating anything when the manifest has no section of that name.
+check "setup asks for the box the manifest defines" grep -Fqx 'BOX=ubuntu' "$CLAUDE_SETUP"
 check "hook launches the setup script" grep -Fq " $CLAUDE_SETUP" "$CLAUDE_HOOK"
-check "apps.ini ends with the same manifest, for ujust setup-distrobox-app claude" bash -c "tail -n \"\$(wc -l <'$CLAUDE_INI')\" '$APPS_INI' | cmp -s - '$CLAUDE_INI'"
-check "apps.ini has exactly one [claude] section" test "$(grep -cFx '[claude]' "$APPS_INI")" = 1
+check "apps.ini ends with the same manifest, for ujust setup-distrobox-app ubuntu" bash -c "tail -n \"\$(wc -l <'$CLAUDE_INI')\" '$APPS_INI' | cmp -s - '$CLAUDE_INI'"
+check "apps.ini has exactly one [ubuntu] section" test "$(grep -cFx '[ubuntu]' "$APPS_INI")" = 1
 check "the appended section did not replace the base's entries" bash -c "test \"\$(grep -c '^\[' '$APPS_INI')\" -gt 1"
 for script in "$CLAUDE_INIT" "$CLAUDE_SETUP" "$CLAUDE_HOOK"; do
 	check "$script is executable" test -x "$script"

@@ -1,12 +1,14 @@
 #!/usr/bin/bash
 # Exercises system_files/usr/share/ublue-os/user-setup.hooks.d/35-portal-tweaks.sh, the per-user
-# half of the Bazzite Portal choices, with a temp HOME and stub systemctl and systemd-run.
+# half of the Bazzite Portal choices, with a temp HOME and stub systemctl and systemd-run. The hook asks
+# the brew casks setup script whether anything is pending; that is the repo's real script here.
 # Run inside a container with the repo mounted at /src:
 #   podman run --rm -v "$PWD:/src:ro,Z" <image> /src/tests/test-portal-tweaks-hook.sh
 set -uo pipefail
 
 SRC="${SRC:-/src}"
 HOOK="$SRC/system_files/usr/share/ublue-os/user-setup.hooks.d/35-portal-tweaks.sh"
+CASKS_SETUP="$SRC/system_files/usr/libexec/portal-brew-casks-setup"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -17,7 +19,7 @@ echo "systemctl $*" >>"$CALLS"
 [[ -n "${SYSTEMCTL_FAIL:-}" ]] && exit 1
 exit 0
 EOF
-# SYSTEMD_RUN_FAIL=1 mimics "Unit jetbrains-toolbox-setup.service already exists".
+# SYSTEMD_RUN_FAIL=1 mimics "Unit portal-brew-casks-setup.service already exists".
 cat >"$tmp/bin/systemd-run" <<'EOF'
 #!/usr/bin/bash
 echo "systemd-run $*" >>"$CALLS"
@@ -39,10 +41,12 @@ check() {
 }
 # XDG_STATE_HOME deliberately is not $HOME/.local/state, so the variable and its fallback are told apart.
 run_hook() { # run_hook [VAR=value ...]
-	env HOME="$tmp/home" XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" CALLS="$tmp/calls.log" "$@" bash "$HOOK"
+	env HOME="$tmp/home" XDG_STATE_HOME="$tmp/state" PATH="$tmp/bin:$PATH" CALLS="$tmp/calls.log" \
+		PORTAL_BREW_CASKS_SETUP="$CASKS_SETUP" "$@" bash "$HOOK"
 }
 run_hook_without_xdg_state_home() {
-	env -u XDG_STATE_HOME HOME="$tmp/home" PATH="$tmp/bin:$PATH" CALLS="$tmp/calls.log" bash "$HOOK"
+	env -u XDG_STATE_HOME HOME="$tmp/home" PATH="$tmp/bin:$PATH" CALLS="$tmp/calls.log" \
+		PORTAL_BREW_CASKS_SETUP="$CASKS_SETUP" bash "$HOOK"
 }
 hook_fails() { ! run_hook "$@"; }
 reset() {
@@ -54,14 +58,14 @@ called() { grep -qx -- "$1" "$tmp/calls.log"; }
 never_called() { ! grep -q -- "$1" "$tmp/calls.log"; }
 fsr4="$tmp/home/.config/environment.d/99-proton-fsr4-rdna3.conf"
 STEAM_ICONS='systemctl --user enable --now steam-icons-cleanup.service'
-TOOLBOX='systemd-run --user --collect --quiet --unit=jetbrains-toolbox-setup /usr/libexec/jetbrains-toolbox-setup'
+CASKS="systemd-run --user --collect --quiet --unit=portal-brew-casks-setup $CASKS_SETUP"
 
 echo "== first login"
 reset
 check "hook exits 0" run_hook
 check "FSR4 upgrade for RDNA3 is switched on where ujust global-fsr4-rdna3 keeps it" test "$(cat "$fsr4")" = "PROTON_FSR4_RDNA3_UPGRADE=1"
 check "Steam desktop icon cleanup is enabled for this user, as ujust steam-icons enable does" called "$STEAM_ICONS"
-check "JetBrains Toolbox install is started as a detached user unit, not run inline" called "$TOOLBOX"
+check "the brew casks install (JetBrains Toolbox, LM Studio) is started as a detached user unit, not run inline" called "$CASKS"
 
 echo "== later logins, after both were switched off again with ujust or the Portal"
 rm -f "$fsr4"
@@ -69,10 +73,10 @@ rm -f "$fsr4"
 check "hook exits 0" run_hook
 check "the FSR4 file is not brought back" test ! -e "$fsr4"
 check "the icon cleanup is not enabled again" never_called 'steam-icons-cleanup'
-check "the Toolbox install is started again while it has not succeeded" called "$TOOLBOX"
+check "the casks install is started again while it has not succeeded" called "$CASKS"
 
-echo "== JetBrains Toolbox is installed (the setup script left its stamp)"
-touch "$tmp/state/portal-tweaks/jetbrains-toolbox"
+echo "== both casks are installed (the setup script left its stamps)"
+touch "$tmp/state/portal-tweaks/jetbrains-toolbox" "$tmp/state/portal-tweaks/lm-studio"
 : >"$tmp/calls.log"
 check "hook exits 0" run_hook
 check "nothing is started" test ! -s "$tmp/calls.log"
@@ -85,7 +89,7 @@ echo "== enabling the icon cleanup fails"
 reset
 check "hook reports the failure" hook_fails SYSTEMCTL_FAIL=1
 check "the FSR4 switch is still applied" test -e "$fsr4"
-check "the Toolbox install is still started" called "$TOOLBOX"
+check "the casks install is still started" called "$CASKS"
 : >"$tmp/calls.log"
 check "next login: hook exits 0" run_hook
 check "the icon cleanup is tried again" called "$STEAM_ICONS"
@@ -102,10 +106,10 @@ rm -f "$fsr4"
 : >"$tmp/calls.log"
 check "hook exits 0" run_hook_without_xdg_state_home
 check "the first run is remembered there" test ! -e "$fsr4"
-touch "$tmp/home/.local/state/portal-tweaks/jetbrains-toolbox"
+touch "$tmp/home/.local/state/portal-tweaks/jetbrains-toolbox" "$tmp/home/.local/state/portal-tweaks/lm-studio"
 : >"$tmp/calls.log"
 check "hook exits 0" run_hook_without_xdg_state_home
-check "the Toolbox stamp is looked up there too" test ! -s "$tmp/calls.log"
+check "the cask stamps are looked up there too" test ! -s "$tmp/calls.log"
 
 if ((fails > 0)); then
 	echo "$fails check(s) failed"

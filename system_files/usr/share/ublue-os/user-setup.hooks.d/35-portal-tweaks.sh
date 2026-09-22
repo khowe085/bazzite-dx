@@ -29,14 +29,16 @@ rc=0
 once fsr4-rdna3 enable_fsr4_rdna3 || rc=1
 once steam-icons enable_steam_icons_cleanup || rc=1
 
-# "JetBrains Toolbox" is a Homebrew install that takes minutes, and ublue-user-setup runs its hooks
-# one after another, so it goes into a detached user unit. Follow it with:
-#   journalctl --user -u jetbrains-toolbox-setup
+# "JetBrains Toolbox" and "LM Studio" are Homebrew installs that take minutes, and ublue-user-setup
+# runs its hooks one after another, so they go into a detached user unit. Follow it with:
+#   journalctl --user -u portal-brew-casks-setup
+# The setup script owns the list of casks and knows whether any is still to be installed.
 # If an install from an earlier login is still running, the unit name is taken and systemd-run
 # refuses. That is not a failure of this hook: there is nothing to add.
-if [[ ! -e "$STATE_DIR/jetbrains-toolbox" ]]; then
-	if ! systemd-run --user --collect --quiet --unit=jetbrains-toolbox-setup /usr/libexec/jetbrains-toolbox-setup; then
-		echo "jetbrains-toolbox-setup was not started; it is probably still running from an earlier login"
+CASKS_SETUP="${PORTAL_BREW_CASKS_SETUP:-/usr/libexec/portal-brew-casks-setup}"
+if "$CASKS_SETUP" --pending; then
+	if ! systemd-run --user --collect --quiet --unit=portal-brew-casks-setup "$CASKS_SETUP"; then
+		echo "portal-brew-casks-setup was not started; it is probably still running from an earlier login"
 	fi
 fi
 exit "$rc"
