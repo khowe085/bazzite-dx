@@ -15,6 +15,11 @@ on:
         options:
           - amd64
           - arm64
+      tag:
+        description: "Image tag to install, e.g. pr-7 for a pull request's build"
+        required: false
+        default: latest
+        type: string
   pull_request:
     branches:
       - main
@@ -83,15 +88,22 @@ jobs:
         with:
           builder-image: ${{ env.BIB_IMAGE }}
           config-file: ${{ matrix.disk-type == 'anaconda-iso' && './disk_config/iso.toml' || './disk_config/disk.toml' }}
-          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+          # Pull request runs have no inputs and build from DEFAULT_TAG.
+          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.tag || env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
+          # The base image names no root filesystem type, and bootc-image-builder builds neither the
+          # ISO nor the disk image without one. Btrfs, as on Bazzite, for the /var/home snapshots and
+          # deduplication.
+          rootfs: btrfs
           additional-args: --use-librepo=True
 
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
+          # One name per matrix leg: under the shared default name, overwrite would keep only the last.
+          name: ${{ matrix.disk-type }}
           path: ${{ steps.build.outputs.output-directory }}
           if-no-files-found: error
           retention-days: 0

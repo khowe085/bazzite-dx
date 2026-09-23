@@ -2,6 +2,11 @@
 contents = """
 %post
 bootc switch --mutate-in-place --transport registry ghcr.io/khowe085/bazzite-dx:latest
+# Queue the key Bazzite's kernel and modules are signed with, as `ujust enroll-secure-boot-key` does:
+# the first reboot then offers "Enroll MOK", password universalblue. Nothing is queued if the
+# firmware already has the key. Written without backslashes, which this TOML string would expand.
+mokutil --timeout -1
+{ echo universalblue; echo universalblue; } | mokutil --import /etc/pki/akmods/certs/akmods-ublue.der
 %end
 """
 

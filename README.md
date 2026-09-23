@@ -220,6 +220,25 @@ Sunshine, Boxtron, Netflix, and adding the media apps to Steam.
 
    then reboot.
 
+## Installing from an ISO
+
+The KDE and power defaults reach a profile whose first desktop login is on this image. Installing from
+an ISO of it gets you that; installing stock Bazzite and then running `bootc switch` does not, because
+stock Bazzite has already saved its own power values and a floating panel into the profile by then.
+
+1. Actions → **Build disk images** → Run workflow, platform `amd64`, tag `latest` (or `pr-<number>`
+   for a pull request's build). The run keeps the ISO as the `anaconda-iso` artifact, next to a
+   `qcow2` virtual machine image.
+2. Write the ISO to a USB stick and boot it. The installer is Anaconda, Fedora's, not Bazzite's: pick
+   the disk, tick "Encrypt my data" for LUKS, keep Btrfs, and create your user.
+3. If the firmware does not have the Secure Boot key yet, the first reboot shows the MOK manager:
+   choose "Enroll MOK", continue, and enter the password `universalblue`. If it does not show and the
+   new system will not boot with Secure Boot on, turn Secure Boot off in the firmware, boot, run
+   `ujust enroll-secure-boot-key`, enroll at the next reboot the same way, then turn Secure Boot back on.
+
+The installed system follows `latest`, whichever tag the ISO was built from, so merge a pull request
+before a machine installed from its ISO updates.
+
 ## Testing a pull request on the machine
 
 The workflow also publishes and signs every pull request opened from a branch of this repository, under
