@@ -104,9 +104,42 @@ check "with the Astronomy (NASA) provider" grep -q 'writeConfig("Provider", "apo
 check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.potd/metadata.json
 check "and that provider" test -f /usr/lib64/qt6/plugins/potd/plasma_potd_apodprovider.so
 # Read back with KDE's own parser: KWin's Touchpad group covers touchpads, Pointer the other pointing devices.
+input_default() { kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$1" --key "$2"; }
 for type in Touchpad Pointer Keyboard; do
-	check "natural scrolling is the default for $type devices" test "$(kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$type" --key NaturalScroll)" = true
+	check "natural scrolling is the default for $type devices" test "$(input_default "$type" NaturalScroll)" = true
+	check "no pointer acceleration is the default for $type devices" test "$(input_default "$type" PointerAccelerationProfile)" = 1
+	check "tap-and-drag lets the finger lift briefly by default for $type devices" test "$(input_default "$type" TapDragLock)" = true
 done
+check "the top-left screen corner does nothing" test "$(kreadconfig6 --file /etc/xdg/kwinrc --group Effect-overview --key BorderActivate)" = 9
+check "the screen does not lock by itself" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key Autolock)" = false
+check "and System Settings shows Never for that" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key Timeout)" = 0
+for layout in /usr/share/plasma/layout-templates/*/contents/layout.js; do
+	template=${layout%/contents/layout.js}
+	check "the Add Panel template ${template##*/} makes a panel that does not float" bash -c "sed -n 2p '$layout' | grep -qx 'panel.floating = false'"
+done
+
+echo "== Power management"
+POWER=/etc/xdg/powerdevilrc
+power() { kreadconfig6 --file "$POWER" --group "$1" --group "$2" --key "$3"; }
+check "no package ships $POWER, which the image's replaces whole" bash -c "! rpm -qf $POWER"
+check "Bazzite's Plasma 5 power profiles, which powerdevil would copy into new profiles, are gone" test ! -e /etc/xdg/powermanagementprofilesrc
+# profile, then sleep, dim and screen-off timeouts in seconds, lid action, power profile
+while read -r profile sleep dim off lid ppd; do
+	check "$profile: sleep when inactive" test "$(power "$profile" SuspendAndShutdown AutoSuspendAction)" = 1
+	check "$profile: after $sleep s" test "$(power "$profile" SuspendAndShutdown AutoSuspendIdleTimeoutSec)" = "$sleep"
+	check "$profile: the power button puts the machine to sleep" test "$(power "$profile" SuspendAndShutdown PowerButtonAction)" = 1
+	check "$profile: closing the lid does action $lid" test "$(power "$profile" SuspendAndShutdown LidAction)" = "$lid"
+	check "$profile: the screen dims" test "$(power "$profile" Display DimDisplayWhenIdle)" = true
+	check "$profile: after $dim s" test "$(power "$profile" Display DimDisplayIdleTimeoutSec)" = "$dim"
+	check "$profile: the screen turns off" test "$(power "$profile" Display TurnOffDisplayWhenIdle)" = true
+	check "$profile: after $off s" test "$(power "$profile" Display TurnOffDisplayIdleTimeoutSec)" = "$off"
+	check "$profile: whether locked or not" test "$(power "$profile" Display TurnOffDisplayIdleTimeoutWhenLockedSec)" = -2
+	check "$profile: power profile $ppd" test "$(power "$profile" Performance PowerProfile)" = "$ppd"
+done <<'EOF'
+AC 1800 900 1800 0 performance
+Battery 600 300 600 1 balanced
+LowBattery 300 120 300 1 power-saver
+EOF
 
 echo "== Tailscale"
 check "tailscaled enabled" systemctl is-enabled tailscaled.service

@@ -1,0 +1,52 @@
+# Power management defaults of this image, one profile per power state (System Settings > Power
+# Management). A value set there is stored in the user's own ~/.config/powerdevilrc and wins.
+# Actions: 0 = do nothing, 1 = sleep. Times are in seconds.
+# TurnOffDisplayIdleTimeoutWhenLockedSec=-2 is "When locked and unlocked": the same timeout either way.
+
+[AC][SuspendAndShutdown]
+AutoSuspendAction=1
+AutoSuspendIdleTimeoutSec=1800
+PowerButtonAction=1
+LidAction=0
+
+[AC][Display]
+DimDisplayWhenIdle=true
+DimDisplayIdleTimeoutSec=900
+TurnOffDisplayWhenIdle=true
+TurnOffDisplayIdleTimeoutSec=1800
+TurnOffDisplayIdleTimeoutWhenLockedSec=-2
+
+[AC][Performance]
+PowerProfile=performance
+
+[Battery][SuspendAndShutdown]
+AutoSuspendAction=1
+AutoSuspendIdleTimeoutSec=600
+PowerButtonAction=1
+LidAction=1
+
+[Battery][Display]
+DimDisplayWhenIdle=true
+DimDisplayIdleTimeoutSec=300
+TurnOffDisplayWhenIdle=true
+TurnOffDisplayIdleTimeoutSec=600
+TurnOffDisplayIdleTimeoutWhenLockedSec=-2
+
+[Battery][Performance]
+PowerProfile=balanced
+
+[LowBattery][SuspendAndShutdown]
+AutoSuspendAction=1
+AutoSuspendIdleTimeoutSec=300
+PowerButtonAction=1
+LidAction=1
+
+[LowBattery][Display]
+DimDisplayWhenIdle=true
+DimDisplayIdleTimeoutSec=120
+TurnOffDisplayWhenIdle=true
+TurnOffDisplayIdleTimeoutSec=300
+TurnOffDisplayIdleTimeoutWhenLockedSec=-2
+
+[LowBattery][Performance]
+PowerProfile=power-saver
