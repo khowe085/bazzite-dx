@@ -37,7 +37,7 @@ jobs:
         with:
           tool-cache: true
 
-      # Two images of Bazzite's size and the ISO do not fit the runner's disk; as in Bazzite's workflow.
+      # As Bazzite's workflow does: container storage on a zstd-compressed Btrfs loopback.
       - name: Put container storage on a Btrfs loopback
         run: |
           sudo truncate -s 110G /mnt/podman-storage.img
@@ -58,6 +58,12 @@ jobs:
         env:
           TAG: ${{ inputs.tag || 'latest' }}
         run: |
+          # The installer's hooks find the image to install with `podman images 'bazzite*'`. Under any
+          # other name the ISO would still build, with an empty image reference in its kickstart.
+          if [[ ${IMAGE_NAME,,} != bazzite* ]]; then
+            echo "::error::installer/ only finds an image whose name starts with bazzite, not ${IMAGE_NAME}"
+            exit 1
+          fi
           sudo env TMPDIR=/mnt/podman-storage/tmp podman build \
             --cap-add sys_admin \
             --security-opt label=disable \
