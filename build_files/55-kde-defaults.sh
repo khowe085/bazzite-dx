@@ -9,6 +9,11 @@ KDEGLOBALS="${KDE_DEFAULTS_KDEGLOBALS:-/etc/xdg/kdeglobals}"
 grep -q '^LookAndFeelPackage=' "$KDEGLOBALS"
 sed -i 's/^LookAndFeelPackage=.*/LookAndFeelPackage=org.fedoraproject.fedoradark.desktop/' "$KDEGLOBALS"
 
+# The Deck's file (bazzite-dx is built on bazzite-deck) also has the compositor scale X11 apps
+# ([KScreen] XwaylandClientsScale=false), which blurs them on a scaled display. Bazzite's desktop edition
+# keeps KDE's default, where they scale themselves; the key goes whatever its value is spelled like.
+sed -i '/^XwaylandClientsScale=/d' "$KDEGLOBALS"
+
 # Input defaults for touchpads and mice: natural scrolling, no pointer acceleration (libinput's flat
 # profile, "Enable pointer acceleration" unchecked in System Settings) and tap-and-drag that lets the
 # finger lift briefly ("Allow briefly lifting finger during tap-and-drag"; devices that cannot tap

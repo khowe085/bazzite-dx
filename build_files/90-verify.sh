@@ -92,6 +92,8 @@ check "Fedora Dark is the default global theme" grep -qx "LookAndFeelPackage=$LN
 check "kdeglobals names one global theme only" test "$(grep -c '^LookAndFeelPackage=' /etc/xdg/kdeglobals)" = 1
 check "the base ships that theme" test -f "/usr/share/plasma/look-and-feel/$LNF/metadata.json"
 check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=false' /etc/xdg/kdeglobals
+# With --type bool, kreadconfig6 exits 0 only for true, however false is spelled.
+check "X11 apps scale themselves, KDE's default rather than the Deck's" kreadconfig6 --file /etc/xdg/kdeglobals --group KScreen --key XwaylandClientsScale --type bool --default true
 check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
 check "in the directory the base uses for its own Plasma update script" test -f "$UPDATES_DIR/bazzite-pins.js"
 # Bazzite's Vapor theme writes its wallpaper into every profile it sets up; the script has to know
@@ -279,6 +281,11 @@ check "gh package installed" rpm -q gh
 check "gh runs" gh --version
 check "tea installed" test -x /usr/bin/tea
 check "tea runs and reports a version" bash -c 'tea --version | grep -Eq "[0-9]+\.[0-9]+\.[0-9]+"'
+
+echo "== dnf bookkeeping"
+check "no dnf usage counter or repo state under /var/lib/dnf" test ! -e /var/lib/dnf
+check "no dnf install history" bash -c '! ls /usr/lib/sysimage/libdnf5/transaction_history.sqlite* 2>/dev/null'
+check "dnf's package state is still there" test -f /usr/lib/sysimage/libdnf5/packages.toml
 
 if ((fails > 0)); then
 	echo "$fails check(s) failed"

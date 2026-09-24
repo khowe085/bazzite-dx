@@ -1,8 +1,9 @@
 #!/usr/bin/bash
 # Exercises build_files/55-kde-defaults.sh, which sets the image's KDE defaults, against scratch
-# copies of the Bazzite files it changes: kdeglobals (Fedora Dark as the default global theme),
-# kcminputrc (input defaults), kwinrc (top-left screen corner), kscreenlockerrc (automatic lock), the
-# Plasma 5 power profiles it removes and the Add Panel templates (panels that do not float).
+# copies of the Bazzite files it changes: kdeglobals (Fedora Dark as the default global theme, X11 apps
+# scaling themselves), kcminputrc (input defaults), kwinrc (top-left screen corner), kscreenlockerrc
+# (no automatic lock, lock after waking from sleep), the Plasma 5 power profiles and the Deck-only
+# files it removes, and the Add Panel templates (panels that do not float).
 # Run inside a container with the repo mounted at /src:
 #   podman run --rm -v "$PWD:/src:ro,Z" <image> /src/tests/test-kde-defaults.sh
 set -uo pipefail
@@ -44,7 +45,8 @@ kread() {
 	done
 	kreadconfig6 --file "$file" "${groups[@]}" --key "$1"
 }
-# Bazzite's /etc/xdg/kdeglobals (steamdeck-kde-presets-desktop), shortened to one font line.
+# Bazzite's /etc/xdg/kdeglobals (steamdeck-kde-presets, the Deck variant bazzite-dx gets from
+# bazzite-deck), shortened to one font line.
 write_bazzite_kdeglobals() {
 	cat >"$tmp/kdeglobals" <<'EOF'
 [KDE]
@@ -107,6 +109,14 @@ check "Fedora Dark is the default global theme" grep -qx 'LookAndFeelPackage=org
 check "Vapor no longer is" bash -c "! grep -q 'com.valve.vapor.desktop' '$tmp/kdeglobals'"
 check "the setting is still in the [KDE] group, right below its header" bash -c "grep -A1 -Fx '[KDE]' '$tmp/kdeglobals' | grep -q '^LookAndFeelPackage='"
 check "nothing else in the file changed" test "$(diff "$tmp/before" "$tmp/kdeglobals" | grep -c '^[<>]')" = 2
+
+echo "== Bazzite's Deck kdeglobals has the compositor scale X11 apps"
+write_bazzite_files
+printf '\n[KScreen]\nXwaylandClientsScale=false\n' >>"$tmp/kdeglobals"
+cp "$tmp/kdeglobals" "$tmp/before"
+check "build step exits 0" run_step
+check "X11 apps scale themselves again, KDE's default (sharp on a scaled display)" test -z "$(kread kdeglobals KScreen XwaylandClientsScale)"
+check "only that line and the theme line changed" test "$(diff "$tmp/before" "$tmp/kdeglobals" | grep -c '^[<>]')" = 3
 
 echo "== second run"
 cp "$tmp/kdeglobals" "$tmp/once"
