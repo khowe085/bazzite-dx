@@ -226,18 +226,18 @@ The KDE and power defaults reach a profile whose first desktop login is on this 
 an ISO of it gets you that; installing stock Bazzite and then running `bootc switch` does not, because
 stock Bazzite has already saved its own power values and a floating panel into the profile by then.
 
-1. Actions → **Build disk images** → Run workflow, platform `amd64`, tag `latest` (or `pr-<number>`
-   for a pull request's build). The run keeps the ISO as the `anaconda-iso` artifact, next to a
-   `qcow2` virtual machine image.
-2. Write the ISO to a USB stick and boot it. The installer is Anaconda, Fedora's, not Bazzite's: pick
-   the disk, tick "Encrypt my data" for LUKS, keep Btrfs, and create your user.
-3. If the firmware does not have the Secure Boot key yet, the first reboot shows the MOK manager:
-   choose "Enroll MOK", continue, and enter the password `universalblue`. If it does not show and the
-   new system will not boot with Secure Boot on, turn Secure Boot off in the firmware, boot, run
-   `ujust enroll-secure-boot-key`, enroll at the next reboot the same way, then turn Secure Boot back on.
+The ISO is Bazzite's own live installer (`installer/`, copied from Bazzite), set up to install this image:
 
-The installed system follows `latest`, whichever tag the ISO was built from, so merge a pull request
-before a machine installed from its ISO updates.
+1. Actions → **Build ISO** → Run workflow, tag `latest` (or `pr-<number>` for a pull request's build).
+   The ISO and its checksum are the run's `iso` artifact.
+2. Write it to a USB stick and boot it. It starts a live Bazzite session with the same installer as
+   Bazzite's ISO; choose the disk, encryption and your user there.
+3. With Secure Boot on, the installer queues the key Bazzite's kernel is signed with. At the first
+   reboot the MOK manager asks for it: choose "Enroll MOK", continue, and enter `universalblue`. If the
+   firmware has the key already, nothing is asked.
+
+The installed system follows the tag the ISO was built from. After installing from a `pr-<number>` ISO,
+switch to `latest` once the pull request is merged, as described next.
 
 ## Testing a pull request on the machine
 
