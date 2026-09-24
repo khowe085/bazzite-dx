@@ -29,7 +29,9 @@ run_step() {
 	env KDE_DEFAULTS_KDEGLOBALS="$tmp/kdeglobals" KDE_DEFAULTS_KCMINPUTRC="$tmp/kcminputrc" \
 		KDE_DEFAULTS_KWINRC="$tmp/kwinrc" KDE_DEFAULTS_KSCREENLOCKERRC="$tmp/kscreenlockerrc" \
 		KDE_DEFAULTS_PLASMA5_POWER_PROFILES="$tmp/powermanagementprofilesrc" \
-		KDE_DEFAULTS_LAYOUT_TEMPLATES="$TEMPLATES" bash "$STEP"
+		KDE_DEFAULTS_LAYOUT_TEMPLATES="$TEMPLATES" KDE_DEFAULTS_RETURN_SHORTCUT="$tmp/Return.desktop" \
+		KDE_DEFAULTS_IBUS_AUTOSTART="$tmp/ibus.desktop" KDE_DEFAULTS_IBUS_ENV="$tmp/ibus.sh" \
+		KDE_DEFAULTS_BALOOFILERC="$tmp/baloofilerc" bash "$STEP"
 }
 step_fails() { ! run_step; }
 # kread <file> <group>... <key>: the value KDE's own parser reads from that scratch file.
@@ -71,6 +73,11 @@ VirtualKeyboardEnabled=true
 EOF
 	printf '[Daemon]\nAutolock=false\nLockOnResume=false\n' >"$tmp/kscreenlockerrc"
 	printf '[AC][DPMSControl]\nidleTime=600\nlockBeforeTurnOff=1\n' >"$tmp/powermanagementprofilesrc"
+	# Deck-only files of steamdeck-kde-presets, which bazzite-dx gets from bazzite-deck.
+	printf '[Desktop Entry]\nName=Return to Gaming Mode\nExec=/usr/bin/return-to-gamemode\n' >"$tmp/Return.desktop"
+	printf '[Desktop Entry]\nName=IBus\nExec=ibus-daemon --panel=/usr/libexec/kimpanel-ibus-panel\n' >"$tmp/ibus.desktop"
+	printf 'export XMODIFIERS= @ im = ibus\n' >"$tmp/ibus.sh"
+	printf '[General]\nonly basic indexing=true\n' >"$tmp/baloofilerc"
 	rm -rf "$TEMPLATES"
 	mkdir -p "$TEMPLATES"/org.kde.plasma.desktop.{defaultPanel,emptyPanel,appmenubar}/contents
 	# Bazzite's own version of the default panel, which names another panel `panel` further down.
@@ -167,13 +174,26 @@ check "Bazzite's settings are kept" test "$(kread kwinrc Wayland VirtualKeyboard
 echo "== automatic screen lock, Bazzite's kscreenlockerrc"
 check "the screen does not lock by itself" test "$(kread kscreenlockerrc Daemon Autolock)" = false
 check "and System Settings shows Never, which it reads from the timeout" test "$(kread kscreenlockerrc Daemon Timeout)" = 0
-check "Bazzite's other lock setting is kept" test "$(kread kscreenlockerrc Daemon LockOnResume)" = false
+check "but it locks after waking from sleep, which Bazzite's Deck file turns off" test "$(kread kscreenlockerrc Daemon LockOnResume)" = true
 
 echo "== automatic screen lock, the base no longer turns it off"
 write_bazzite_files
 printf '[Daemon]\nLockOnResume=false\n' >"$tmp/kscreenlockerrc"
 check "build step exits 0" run_step
 check "the screen still does not lock by itself" test "$(kread kscreenlockerrc Daemon Autolock)" = false
+
+echo "== Deck-only files, which Bazzite's desktop edition does not ship"
+write_bazzite_files
+check "build step exits 0" run_step
+check "new users get no Return to Gaming Mode shortcut on the desktop" test ! -e "$tmp/Return.desktop"
+check "the IBus daemon no longer starts at login" test ! -e "$tmp/ibus.desktop"
+check "nor is the session told to use it" test ! -e "$tmp/ibus.sh"
+check "Baloo indexes file contents again, not only names" test ! -e "$tmp/baloofilerc"
+
+echo "== the base no longer ships those Deck-only files"
+write_bazzite_files
+rm -f "$tmp/Return.desktop" "$tmp/ibus.desktop" "$tmp/ibus.sh" "$tmp/baloofilerc"
+check "build step exits 0" run_step
 
 echo "== Bazzite's Plasma 5 power profiles"
 check "are removed, so powerdevil copies nothing from them into a new profile" test ! -e "$tmp/powermanagementprofilesrc"

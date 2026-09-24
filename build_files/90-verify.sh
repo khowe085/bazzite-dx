@@ -113,6 +113,11 @@ done
 check "the top-left screen corner does nothing" test "$(kreadconfig6 --file /etc/xdg/kwinrc --group Effect-overview --key BorderActivate)" = 9
 check "the screen does not lock by itself" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key Autolock)" = false
 check "and System Settings shows Never for that" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key Timeout)" = 0
+check "but it locks after waking from sleep" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key LockOnResume)" = true
+# bazzite-dx is built on bazzite-deck, so it has steamdeck-kde-presets' Deck-only files; the desktop edition does not.
+for f in /etc/skel/Desktop/Return.desktop /etc/xdg/autostart/ibus.desktop /etc/xdg/plasma-workspace/env/ibus.sh /etc/xdg/baloofilerc; do
+	check "the Deck-only $f is gone" test ! -e "$f"
+done
 for layout in /usr/share/plasma/layout-templates/*/contents/layout.js; do
 	template=${layout%/contents/layout.js}
 	check "the Add Panel template ${template##*/} makes a panel that does not float" bash -c "sed -n 2p '$layout' | grep -qx 'panel.floating = false'"

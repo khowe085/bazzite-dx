@@ -44,10 +44,20 @@ done >>"$KCMINPUTRC"
 # is what System Settings saves for Overview when the corner is set to "No Action".
 printf '\n[Effect-overview]\nBorderActivate=9\n' >>"${KDE_DEFAULTS_KWINRC:-/etc/xdg/kwinrc}"
 
-# The screen never locks by itself. Bazzite already turns Autolock off, but System Settings shows
-# the Timeout, so it reads "5 minutes" (the default) although nothing locks. Choosing "Never" there
-# writes both keys.
-printf '\n[Daemon]\nAutolock=false\nTimeout=0\n' >>"${KDE_DEFAULTS_KSCREENLOCKERRC:-/etc/xdg/kscreenlockerrc}"
+# The screen never locks by itself, but does lock after waking from sleep. Bazzite already turns
+# Autolock off, but System Settings shows the Timeout, so it reads "5 minutes" (the default) although
+# nothing locks; choosing "Never" there writes both keys. Bazzite's Deck file also sets
+# LockOnResume=false; within one file KConfig takes the last value, so this group overrides it.
+printf '\n[Daemon]\nAutolock=false\nTimeout=0\nLockOnResume=true\n' >>"${KDE_DEFAULTS_KSCREENLOCKERRC:-/etc/xdg/kscreenlockerrc}"
+
+# Deck-only files of steamdeck-kde-presets: bazzite-dx is built on bazzite-deck, and Bazzite's desktop
+# edition (steamdeck-kde-presets-desktop) deletes them. The "Return to Gaming Mode" shortcut on every
+# new user's desktop, the IBus input-method daemon with its session variable at every KDE login, and
+# Baloo indexing file names only.
+rm -f "${KDE_DEFAULTS_RETURN_SHORTCUT:-/etc/skel/Desktop/Return.desktop}" \
+	"${KDE_DEFAULTS_IBUS_AUTOSTART:-/etc/xdg/autostart/ibus.desktop}" \
+	"${KDE_DEFAULTS_IBUS_ENV:-/etc/xdg/plasma-workspace/env/ibus.sh}" \
+	"${KDE_DEFAULTS_BALOOFILERC:-/etc/xdg/baloofilerc}"
 
 # The power profiles are in /etc/xdg/powerdevilrc (system_files). Bazzite also ships the Steam
 # Deck's Plasma 5 profiles, which powerdevil copies into a new user's own powerdevilrc at the first
