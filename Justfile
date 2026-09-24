@@ -453,5 +453,5 @@ format:
         echo "shfmt could not be found. Please install it."
         exit 1
     fi
-    # Run shfmt on all Bash scripts
-    find . -iname "*.sh" -type f -exec shfmt --write "{}" ';'
+    # Run shfmt on all Bash scripts, except installer/: Bazzite's, kept verbatim so it can be copied over whole
+    find . -path ./installer -prune -o -iname "*.sh" -type f -exec shfmt --write "{}" ';'

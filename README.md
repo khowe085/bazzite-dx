@@ -232,9 +232,9 @@ The ISO is Bazzite's own live installer (`installer/`, copied from Bazzite), set
    The ISO and its checksum are the run's `iso` artifact.
 2. Write it to a USB stick and boot it. It starts a live Bazzite session with the same installer as
    Bazzite's ISO; choose the disk, encryption and your user there.
-3. With Secure Boot on, the installer queues the key Bazzite's kernel is signed with. At the first
-   reboot the MOK manager asks for it: choose "Enroll MOK", continue, and enter `universalblue`. If the
-   firmware has the key already, nothing is asked.
+3. On a UEFI machine the installer queues the key Bazzite's kernel is signed with, whether Secure Boot
+   is on or not. At the first reboot the MOK manager asks for it: choose "Enroll MOK", continue, and
+   enter `universalblue`. If the firmware has the key already, nothing is asked.
 
 The installed system follows the tag the ISO was built from. After installing from a `pr-<number>` ISO,
 switch to `latest` once the pull request is merged, as described next.

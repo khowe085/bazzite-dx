@@ -21,7 +21,7 @@ env:
   LIVE_IMAGE: "ghcr.io/ublue-os/bazzite:stable"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.tag }}
   cancel-in-progress: true
 
 jobs:
@@ -67,19 +67,25 @@ jobs:
             -t localhost/payload:latest installer/
 
       # Bazzite's ISO workflow uses this branch of titanoboa, ublue's live ISO builder, pinned here.
+      # A bare file name, as Bazzite passes: the action resolves iso-dest from its own directory and
+      # needs every directory in it to exist, so the ISO is moved to upload/ in the next step.
       - name: Build the ISO
         id: build
         uses: Zeglius/titanoboa@7737f4748458252ac827dca14b3d6dd09298472a # revamp-pr
         with:
           image-ref: localhost/payload:latest
-          iso-dest: ${{ github.workspace }}/upload/${{ env.IMAGE_NAME }}-${{ inputs.tag || 'latest' }}-amd64.iso
+          iso-dest: ${{ env.IMAGE_NAME }}-${{ inputs.tag || 'latest' }}-amd64.iso
 
-      - name: Checksum
-        working-directory: upload
+      - name: Move the ISO to upload/ with its checksum
+        shell: bash
+        env:
+          ISO_PATH: ${{ steps.build.outputs.iso-dest }}
         run: |
-          for iso in *.iso; do
-            sha256sum "$iso" | tee "$iso-CHECKSUM"
-          done
+          mkdir -p upload
+          mv "$ISO_PATH" upload/
+          cd upload
+          iso="$(basename "$ISO_PATH")"
+          sha256sum "$iso" | tee "$iso-CHECKSUM"
 
       - name: Upload the ISO
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
