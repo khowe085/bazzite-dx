@@ -124,6 +124,27 @@ for layout in /usr/share/plasma/layout-templates/*/contents/layout.js; do
 	template=${layout%/contents/layout.js}
 	check "the Add Panel template ${template##*/} makes a panel that does not float" bash -c "sed -n 2p '$layout' | grep -qx 'panel.floating = false'"
 done
+LNF_DIR="/usr/share/plasma/look-and-feel/$LNF"
+check "Fedora Dark gives new profiles the Plastik window decoration" test "$(kreadconfig6 --file "$LNF_DIR/contents/defaults" --group kwinrc --group org.kde.kdecoration2 --key theme)" = kwin4_decoration_qml_plastik
+check "through Aurorae" test "$(kreadconfig6 --file "$LNF_DIR/contents/defaults" --group kwinrc --group org.kde.kdecoration2 --key library)" = org.kde.kwin.aurorae
+check "the base ships Plastik" test -f /usr/share/kwin/decorations/kwin4_decoration_qml_plastik/metadata.json
+for template in io.github.khowe085.bazzite-dx.topBar io.github.khowe085.bazzite-dx.dock; do
+	check "Fedora Dark's layout makes the panel of $template" grep -qx "loadTemplate(\"$template\")" "$LNF_DIR/contents/layouts/org.kde.plasma.desktop-layout.js"
+	layout="/usr/share/plasma/layout-templates/$template/contents/layout.js"
+	# Plasma skips a widget it cannot find without a word; they come as QML packages or compiled plugins.
+	for widget in $(sed -n 's/.*addWidget("\([^"]*\)").*/\1/p' "$layout"); do
+		check "$template: the base has the widget $widget" bash -c "test -e /usr/share/plasma/plasmoids/$widget/metadata.json || test -e /usr/lib64/qt6/plugins/plasma/applets/$widget.so"
+	done
+done
+check "Bazzite's default panel is no longer in Fedora Dark's layout" bash -c "! grep -q 'org.kde.plasma.desktop.defaultPanel' '$LNF_DIR/contents/layouts/org.kde.plasma.desktop-layout.js'"
+check "the dock's launcher icon (framework) is in the base" test -f /usr/share/icons/hicolor/scalable/apps/framework.svg
+check "Konsole starts with its built-in profile: no default profile in kdeglobals" bash -c "! grep -q '^DefaultProfile=' /etc/xdg/kdeglobals"
+check "nor in konsolerc" bash -c "! grep -q '^DefaultProfile=' /etc/xdg/konsolerc"
+KONSOLE_SHORTCUTS=/etc/skel/.local/share/kxmlgui5/konsole/sessionui.rc
+check "new users get Ctrl+V to paste in Konsole" grep -Fq '<Action name="edit_paste" shortcut="Ctrl+V; Shift+Ins"/>' "$KONSOLE_SHORTCUTS"
+check "from a file older than Konsole's own, so Konsole's menus are used and the shortcut merged in" grep -qx '<gui name="session" version="1">' "$KONSOLE_SHORTCUTS"
+check "notification popups appear at the top centre" test "$(kreadconfig6 --file /etc/xdg/plasmanotifyrc --group Notifications --key PopupPosition)" = TopCenter
+check "low-priority notifications are kept in the history" test "$(kreadconfig6 --file /etc/xdg/plasmanotifyrc --group Notifications --key LowPriorityHistory)" = true
 
 echo "== Power management"
 POWER=/etc/xdg/powerdevilrc

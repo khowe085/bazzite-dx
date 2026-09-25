@@ -14,6 +14,11 @@ sed -i 's/^LookAndFeelPackage=.*/LookAndFeelPackage=org.fedoraproject.fedoradark
 # keeps KDE's default, where they scale themselves; the key goes whatever its value is spelled like.
 sed -i '/^XwaylandClientsScale=/d' "$KDEGLOBALS"
 
+# Konsole starts with its built-in profile instead of Bazzite's Vapor one. Bazzite names Vapor here
+# rather than in konsolerc, which Konsole reads on top of kdeglobals. Without the line Konsole already
+# uses its built-in profile, so there is nothing to check first.
+sed -i '/^DefaultProfile=/d' "$KDEGLOBALS"
+
 # Input defaults for touchpads and mice: natural scrolling, no pointer acceleration (libinput's flat
 # profile, "Enable pointer acceleration" unchecked in System Settings) and tap-and-drag that lets the
 # finger lift briefly ("Allow briefly lifting finger during tap-and-drag"; devices that cannot tap
@@ -55,6 +60,10 @@ printf '\n[Effect-overview]\nBorderActivate=9\n' >>"${KDE_DEFAULTS_KWINRC:-/etc/
 # LockOnResume=false; within one file KConfig takes the last value, so this group overrides it.
 printf '\n[Daemon]\nAutolock=false\nTimeout=0\nLockOnResume=true\n' >>"${KDE_DEFAULTS_KSCREENLOCKERRC:-/etc/xdg/kscreenlockerrc}"
 
+# Notification popups appear at the top centre, below the top bar, and low-priority notifications
+# are kept in the history too. Appended: Plasma ships this file with per-application defaults.
+printf '\n[Notifications]\nPopupPosition=TopCenter\nLowPriorityHistory=true\n' >>"${KDE_DEFAULTS_PLASMANOTIFYRC:-/etc/xdg/plasmanotifyrc}"
+
 # Deck-only files of steamdeck-kde-presets: bazzite-dx is built on bazzite-deck, and Bazzite's desktop
 # edition (steamdeck-kde-presets-desktop) deletes them. The "Return to Gaming Mode" shortcut on every
 # new user's desktop, the IBus input-method daemon with its session variable at every KDE login, and
@@ -80,3 +89,21 @@ for layout in "${layouts[@]}"; do
 	test "$(grep -c 'new Panel' "$layout")" = 1
 done
 sed -i '/^var panel = new Panel$/a panel.floating = false' "${layouts[@]}"
+
+# The default global theme, Fedora Dark, decides two more things for a new profile, and its choices
+# outrank /etc/xdg: the window decoration it copies into ~/.config/kdedefaults, and the desktop layout.
+LNF="${KDE_DEFAULTS_LNF:-/usr/share/plasma/look-and-feel/org.fedoraproject.fedoradark.desktop}"
+
+# Window decoration Plastik instead of Breeze. Checked first: both keys in the decoration group.
+DECORATION_GROUP='/^\[kwinrc\]\[org\.kde\.kdecoration2\]$/,/^\[/'
+test "$(sed -n "${DECORATION_GROUP}{/^library=/p;/^theme=/p}" "$LNF/contents/defaults" | wc -l)" = 2
+sed -i "${DECORATION_GROUP}{s/^library=.*/library=org.kde.kwin.aurorae/;s/^theme=.*/theme=kwin4_decoration_qml_plastik/}" \
+	"$LNF/contents/defaults"
+
+# Two panels instead of Bazzite's default one: this image's top bar and dock (Add Panel templates in
+# system_files). Checked first, as above, unless an earlier run already made the change.
+LAYOUT="$LNF/contents/layouts/org.kde.plasma.desktop-layout.js"
+if ! grep -qx 'loadTemplate("io.github.khowe085.bazzite-dx.topBar")' "$LAYOUT"; then
+	grep -qx 'loadTemplate("org.kde.plasma.desktop.defaultPanel")' "$LAYOUT"
+	sed -i 's/^loadTemplate("org\.kde\.plasma\.desktop\.defaultPanel")$/loadTemplate("io.github.khowe085.bazzite-dx.topBar")\nloadTemplate("io.github.khowe085.bazzite-dx.dock")/' "$LAYOUT"
+fi

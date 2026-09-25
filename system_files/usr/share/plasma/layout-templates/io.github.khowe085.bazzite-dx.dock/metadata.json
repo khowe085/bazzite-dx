@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/LayoutTemplate",
+    "KPlugin": {
+        "Description": "Centred dock along the bottom that hides itself: launcher, task manager and notifications",
+        "EnabledByDefault": true,
+        "Id": "io.github.khowe085.bazzite-dx.dock",
+        "License": "Apache-2.0",
+        "Name": "bazzite-dx Dock"
+    },
+    "X-Plasma-ContainmentCategories": [
+        "panel"
+    ],
+    "X-Plasma-Shell": "plasmashell"
+}
