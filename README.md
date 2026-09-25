@@ -20,7 +20,7 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
 | Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
 | Bazzite Portal selections | Cockpit, DisplayLink, virtualization, Framework fan control, HDMI 2.1 on AMD, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3, JetBrains Toolbox, LM Studio and Crunchyroll, switched on up front (see below) |
-| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below) |
+| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below). The box also has the host's `gh`, `tea` and 1Password SSH agent and commit signing, and Lua 5.1 with LuaRocks, luacheck and busted |
 | SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
 
 The last build step, `build_files/90-verify.sh`, checks all of the above and fails the build otherwise.
@@ -121,12 +121,20 @@ own `distrobox.ini` uses for the same image, and is a general-purpose Ubuntu box
   the manifest behind Bazzite's `ujust setup-distrobox-app`.
 - The box's init hook is `/usr/libexec/claude-distrobox-init` from this image, which the box sees under
   `/run/host`. On the first start it adds Anthropic's apt repository, refuses any signing key other than
-  the fingerprint Anthropic documents, and runs `apt install claude-desktop`. Later starts skip all of it.
+  the fingerprint Anthropic documents, and runs `apt install claude-desktop`. It also installs Lua 5.1 for
+  development from Ubuntu (`lua5.1`, `liblua5.1-0-dev`, `luarocks`, `lua-check` for luacheck, and
+  `build-essential` for LuaRocks' C modules) and busted with `luarocks --lua-version 5.1`. Later starts
+  install only what is missing and are otherwise instant. When the Lua tools cannot be installed (offline),
+  the box still starts and the next start tries again.
   Before that, on every start, it gives the box the host's SSH agent and commit signing through 1Password:
   `/opt/1Password` linked to the host's copy, the host's signing settings in the box's `/etc/gitconfig` and
-  its SSH drop-in in `/etc/ssh/ssh_config.d`. Because the hook comes from the host image, an image update
-  reaches a box that already exists at its next start, a setting the host drops included. A 1Password
-  installed in the box itself is left alone. A step that fails only prints a warning, so the box still starts.
+  its SSH drop-in in `/etc/ssh/ssh_config.d`. It links the host's `gh` and `tea` to the same paths in the box
+  (Ubuntu's `gh` is older, and its `tea` is another program); `gh auth setup-git` points Git at `/usr/bin/gh`,
+  and their logins and config are in your home directory, which the box shares, so `gh` and pushes over HTTPS
+  work in the box without logging in again. Because the hook comes from the host image, an image update
+  reaches a box that already exists at its next start, a setting the host drops included. A 1Password, gh or tea
+  installed in the box itself is left alone. A step of this part that fails only prints a warning, so the box
+  still starts.
 - A first-login hook starts `/usr/libexec/claude-distrobox-setup` as a detached user unit, so the other
   setup hooks are not held up by what is roughly a 1 GB download, once per user. It reads the manifest
   under `/usr`, so a locally edited `apps.ini` cannot make it silently skip the box. An attempt that fails

@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 # Init hook of the "ubuntu" distrobox (see /etc/distrobox/apps.ini). Distrobox runs it as root
 # inside the Ubuntu box on every container start; the host's / is visible there under /run/host.
-# Gives the box the host's SSH agent and commit signing through 1Password, then installs Claude
-# Desktop from Anthropic's apt repository, the way their Linux docs describe.
+# Gives the box the host's SSH agent, commit signing, gh and tea, installs Claude Desktop from
+# Anthropic's apt repository the way their Linux docs describe, and Lua 5.1 tooling for development.
 set -euo pipefail
 
 HOST="${CLAUDE_HOST_ROOT:-/run/host}"
@@ -40,32 +40,72 @@ if [[ -f "$HOST/etc/ssh/ssh_config.d/60-1password-agent.conf" ]]; then
 		"$BOX/etc/ssh/ssh_config.d/60-1password-agent.conf" || warn "could not install the 1Password SSH drop-in"
 fi
 
+# gh and tea as the image ships them (80-forge-clis.sh), newer than Ubuntu's gh; Ubuntu's "tea" is a
+# different program. At the host's paths: gh's `setup-git` writes /usr/bin/gh into the shared
+# ~/.gitconfig as Git's credential helper. Their config and gh's login (in the desktop's keyring,
+# reached over the shared session bus) are in the shared home already. A gh or tea installed in the
+# box itself, even as a link of its own, is left alone.
+for tool in gh tea; do
+	link="$(readlink "$BOX/usr/bin/$tool" || true)"
+	if [[ -x "$HOST/usr/bin/$tool" ]] && { [[ "$link" == "$HOST/usr/bin/$tool" ]] || [[ ! -e "$BOX/usr/bin/$tool" && ! -L "$BOX/usr/bin/$tool" ]]; }; then
+		{ mkdir -p "$BOX/usr/bin" && ln -sfn "$HOST/usr/bin/$tool" "$BOX/usr/bin/$tool"; } ||
+			warn "could not link $tool to the host's"
+	fi
+done
+
 KEY_URL=https://downloads.claude.ai/claude-desktop/key.asc
 KEY_FPR=31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE
 REPO_URL=https://downloads.claude.ai/claude-desktop/apt/stable
 KEYRING="${CLAUDE_KEYRING:-/usr/share/keyrings/claude-desktop-archive-keyring.asc}"
 SOURCES="${CLAUDE_SOURCES:-/etc/apt/sources.list.d/claude-desktop.list}"
 
-# Every start after the first takes this path, so it has to stay cheap and work offline. Ask dpkg
-# about the package rather than PATH about a binary whose name is Anthropic's to change.
-if [[ "$(dpkg-query -W -f='${db:Status-Status}' claude-desktop 2>/dev/null)" == installed ]]; then
+# Lua 5.1 for development: the interpreter, its headers (Ubuntu's liblua5.1-0-dev), LuaRocks (one
+# package for every Lua version; `luarocks --lua-version 5.1`), luacheck (Ubuntu's lua-check), and
+# build-essential, which LuaRocks needs to build busted's C modules. busted itself comes from LuaRocks.
+DEV_PACKAGES=(lua5.1 liblua5.1-0-dev luarocks lua-check build-essential)
+
+# Ask dpkg about packages rather than PATH about binaries whose names are others' to change.
+installed() { [[ "$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null)" == installed ]]; }
+busted_installed() { luarocks --lua-version 5.1 show busted >/dev/null 2>&1; }
+missing=()
+for package in "${DEV_PACKAGES[@]}"; do
+	installed "$package" || missing+=("$package")
+done
+
+# Every start after the first takes this path, so it has to stay cheap and work offline.
+if installed claude-desktop && ((${#missing[@]} == 0)) && busted_installed; then
 	exit 0
 fi
 
 export DEBIAN_FRONTEND=noninteractive
-key="$(mktemp)"
-trap 'rm -f "$key"' EXIT
 
-curl -fsSLo "$key" "$KEY_URL"
-# Anthropic publishes this fingerprint in the install docs; trust no other key for the repository.
-# The file becomes the repository's keyring as a whole, so it must hold that one key and nothing else.
-keys="$(gpg --show-keys --with-colons "$key")"
-if [[ "$(grep -c '^pub:' <<<"$keys")" != 1 ]] || ! grep -qx "fpr:::::::::${KEY_FPR}:" <<<"$keys"; then
-	echo "the downloaded claude-desktop signing key is not exactly the key with fingerprint ${KEY_FPR}" >&2
-	exit 1
+# Claude Desktop is what the box is for: a failure here fails the hook, and the setup unit finishes
+# the box at the next login.
+if ! installed claude-desktop; then
+	key="$(mktemp)"
+	trap 'rm -f "$key"' EXIT
+
+	curl -fsSLo "$key" "$KEY_URL"
+	# Anthropic publishes this fingerprint in the install docs; trust no other key for the repository.
+	# The file becomes the repository's keyring as a whole, so it must hold that one key and nothing else.
+	keys="$(gpg --show-keys --with-colons "$key")"
+	if [[ "$(grep -c '^pub:' <<<"$keys")" != 1 ]] || ! grep -qx "fpr:::::::::${KEY_FPR}:" <<<"$keys"; then
+		echo "the downloaded claude-desktop signing key is not exactly the key with fingerprint ${KEY_FPR}" >&2
+		exit 1
+	fi
+	install -Dm0644 "$key" "$KEYRING"
+	echo "deb [arch=amd64,arm64 signed-by=${KEYRING}] ${REPO_URL} stable main" >"$SOURCES"
+
+	apt-get update
+	apt-get install -y claude-desktop
+	updated=1
 fi
-install -Dm0644 "$key" "$KEYRING"
-echo "deb [arch=amd64,arm64 signed-by=${KEYRING}] ${REPO_URL} stable main" >"$SOURCES"
 
-apt-get update
-apt-get install -y claude-desktop
+# The development tools only warn: the box still starts offline, and the next start tries again.
+if ((${#missing[@]} > 0)); then
+	{ [[ -n "${updated:-}" ]] || apt-get update; } && apt-get install -y "${missing[@]}" ||
+		warn "could not install ${missing[*]}; the next start of the box tries again"
+fi
+if command -v luarocks >/dev/null && ! busted_installed; then
+	luarocks --lua-version 5.1 install busted || warn "could not install busted; the next start of the box tries again"
+fi
