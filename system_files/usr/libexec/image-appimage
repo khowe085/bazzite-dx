@@ -1,0 +1,130 @@
+#!/usr/bin/bash
+# Places an AppImage the image ships (build_files/fetch-appimages.sh) into ~/Applications with a menu
+# entry, and keeps it at the image's version. Run by the first-login hooks on every login:
+#   image-appimage <id> <image dir> <file name> <glob of the user's own copies> <Name> <Comment> <Categories>
+# <image dir> holds <file name> and VERSION.
+#
+# ~/Applications/.<id>.image-version records what was placed: its path, the image version and the
+# file's sha256. A newer image replaces the file only while it is still the one placed, so a copy
+# the app updated itself (EmuDeck does) or the user replaced is left alone from then on. A file that
+# is gone was moved (Gear Lever) or deleted and is not put back. "Newer" is any version other than
+# the one placed, so booting an older deployment puts its version back too. An AppImage matching the glob that
+# was there before this ran is the user's, and nothing is placed, unless it is <file name> and byte
+# for byte the image's copy: a first placement interrupted before its stamp.
+set -euo pipefail
+
+if (($# != 7)); then
+	echo "usage: $0 <id> <image dir> <file name> <user glob> <Name> <Comment> <Categories>" >&2
+	exit 2
+fi
+id=$1 image_dir=$2 file=$3 user_glob=$4 name=$5 comment=$6 categories=$7
+
+APPS_DIR="${HOME}/Applications"
+DESKTOP_DIR="${HOME}/.local/share/applications"
+ICON_DIR="${HOME}/.local/share/icons/hicolor/256x256/apps"
+STAMP="${APPS_DIR}/.${id}.image-version"
+# What the hooks wrote when they downloaded the AppImage at first login: the downloaded asset's
+# name, which is the file's name for EmuDeck but not for Crunchyroll (saved under <file name>). Such
+# a download is taken over only while it is byte for byte the image's copy: otherwise it may be one
+# the app updated itself (the old hooks left EmuDeck to its updater), so it stays unmanaged.
+LEGACY_STAMP="${APPS_DIR}/.${id}.image-placed"
+TARGET="${APPS_DIR}/${file}"
+
+if [[ ! -r "${image_dir}/VERSION" || ! -f "${image_dir}/${file}" ]]; then
+	echo "no ${name} in this image (${image_dir}); skipping" >&2
+	exit 0
+fi
+image_version="$(<"${image_dir}/VERSION")"
+
+sha() { sha256sum "$1" | cut -d' ' -f1; }
+write_stamp() { printf '%s\n%s\n%s\n' "$1" "$2" "$3" >"$STAMP"; }
+
+extract_icon() {
+	local tmp
+	tmp="$(mktemp -d)"
+	# .DirIcon is usually a symlink into the payload, so pull its target too.
+	(
+		cd "$tmp" &&
+			"$TARGET" --appimage-extract .DirIcon >/dev/null 2>&1 &&
+			if [[ -L squashfs-root/.DirIcon ]]; then "$TARGET" --appimage-extract "$(readlink squashfs-root/.DirIcon)" >/dev/null 2>&1; fi &&
+			install -Dm0644 squashfs-root/.DirIcon "${ICON_DIR}/${id}.png"
+	) || echo "could not extract the ${name} icon; the menu entry will use a generic one" >&2
+	rm -rf "$tmp"
+}
+
+place() { # place [path of the copy it replaces]
+	mkdir -p "$APPS_DIR" "$DESKTOP_DIR" "$ICON_DIR"
+	if ! install -m 0755 "${image_dir}/${file}" "${TARGET}.part"; then
+		rm -f "${TARGET}.part"
+		return 1
+	fi
+	mv "${TARGET}.part" "$TARGET"
+	if [[ -n "${1:-}" && "$1" != "$TARGET" ]]; then
+		rm -f "$1"
+	fi
+	extract_icon
+	cat >"${DESKTOP_DIR}/${name}.desktop" <<-EOF
+		[Desktop Entry]
+		Type=Application
+		Name=${name}
+		Comment=${comment}
+		Exec="${TARGET}" %U
+		Icon=${id}
+		Categories=${categories}
+		Terminal=false
+	EOF
+	local placed_sha
+	placed_sha="$(sha "$TARGET")"
+	write_stamp "$TARGET" "$image_version" "$placed_sha"
+	echo "${name} ${image_version} placed at ${TARGET}"
+}
+
+if [[ ! -e "$STAMP" ]]; then
+	if [[ -e "$LEGACY_STAMP" ]]; then
+		# Downloaded by the earlier hook. <file name> first: Crunchyroll's was saved under it, and an
+		# asset-named file next to it would be the user's.
+		legacy_name="$(<"$LEGACY_STAMP")"
+		if [[ -f "$TARGET" ]]; then
+			old="$TARGET"
+		elif [[ -n "$legacy_name" && -f "${APPS_DIR}/${legacy_name}" ]]; then
+			old="${APPS_DIR}/${legacy_name}"
+		else
+			old=""
+		fi
+		if [[ -z "$old" && -n "$legacy_name" ]]; then
+			write_stamp "${APPS_DIR}/${legacy_name}" downloaded -
+		elif [[ -z "$old" ]]; then
+			write_stamp "$TARGET" downloaded -
+		elif cmp -s "$old" "${image_dir}/${file}"; then
+			old_sha="$(sha "$old")"
+			write_stamp "$old" downloaded "$old_sha"
+		else
+			write_stamp "$old" downloaded unmanaged
+		fi
+		rm -f "$LEGACY_STAMP"
+	elif [[ -f "$TARGET" ]] && cmp -s "$TARGET" "${image_dir}/${file}"; then
+		place
+		exit
+	elif compgen -G "${APPS_DIR}/${user_glob}" >/dev/null; then
+		exit 0
+	else
+		place
+		exit
+	fi
+fi
+
+{
+	read -r path
+	read -r version
+	read -r placed_sha
+} <"$STAMP"
+if [[ ! -e "$path" || "$version" == "$image_version" || "$placed_sha" == unmanaged ]]; then
+	exit 0
+fi
+current_sha="$(sha "$path")"
+if [[ "$current_sha" != "$placed_sha" ]]; then
+	echo "${path} changed since it was placed; leaving it to the app and the user"
+	write_stamp "$path" "$version" unmanaged
+	exit 0
+fi
+place "$path"

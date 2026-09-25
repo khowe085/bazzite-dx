@@ -22,6 +22,7 @@ POLICY=/usr/share/polkit-1/actions/com.1password.1Password.policy
 HOOK=/usr/share/ublue-os/user-setup.hooks.d/30-emudeck.sh
 FF_SETUP=/usr/libexec/onepassword-firefox-flatpak-setup
 FF_PREF=/usr/share/ublue-os/firefox-config/zz-onepassword-native-messaging.js
+JUST_DIR=/usr/share/ublue-os/just
 
 echo "== .NET 10 SDK"
 check "dotnet-sdk-10.0 package installed" rpm -q dotnet-sdk-10.0
@@ -73,6 +74,25 @@ echo "== Eden"
 check "Eden AppImage shipped" test -x /usr/lib/eden/Eden.AppImage
 check "Eden AppImage has the AppImage type-2 magic" bash -c 'test "$(dd if=/usr/lib/eden/Eden.AppImage bs=1 skip=8 count=3 2>/dev/null | od -An -c | tr -d " ")" = "AI002"'
 check "Eden version stamp recorded" test -s /usr/lib/eden/VERSION
+
+echo "== EmuDeck and Crunchyroll AppImages"
+APPIMAGE_TOOL=/usr/libexec/image-appimage
+for app in emudeck/EmuDeck crunchyroll/Crunchyroll; do
+	check "${app#*/} AppImage shipped" test -x "/usr/lib/${app}.AppImage"
+	check "${app#*/} AppImage has the AppImage type-2 magic" bash -c "test \"\$(dd if=/usr/lib/${app}.AppImage bs=1 skip=8 count=3 2>/dev/null | od -An -c | tr -d ' ')\" = AI002"
+	check "${app#*/} version stamp recorded" test -s "/usr/lib/${app%/*}/VERSION"
+done
+check "$APPIMAGE_TOOL is executable" test -x "$APPIMAGE_TOOL"
+check "$APPIMAGE_TOOL parses" bash -n "$APPIMAGE_TOOL"
+# The build step fetches from the projects ujust uses, so the Portal's status and toggles still fit.
+check "ujust get-emudeck still downloads from EmuDeck/emudeck-electron" grep -rqF 'https://api.github.com/repos/EmuDeck/emudeck-electron/releases/latest' "$JUST_DIR"
+check "the Portal still gets Crunchyroll from aarron-lee/crunchyroll-linux" grep -rqF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$JUST_DIR"
+# build_files/ is only there during the build (/ctx), not when this runs against a finished image.
+APPIMAGES_STEP="$(dirname "${BASH_SOURCE[0]}")/fetch-appimages.sh"
+if [[ -f "$APPIMAGES_STEP" ]]; then
+	check "the build step fetches EmuDeck from there" grep -qx 'ship EmuDeck/emudeck-electron emudeck EmuDeck.AppImage' "$APPIMAGES_STEP"
+	check "and Crunchyroll" grep -qx 'ship aarron-lee/crunchyroll-linux crunchyroll Crunchyroll.AppImage' "$APPIMAGES_STEP"
+fi
 
 echo "== EmuDeck first-login hook"
 check "hook is executable" test -x "$HOOK"
@@ -196,7 +216,6 @@ check "every preinstall section is well-formed" bash -c "test \"\$(grep -c '^\['
 check "every preinstall section is followed by its Branch line" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -A1 '^\[' '$PREINSTALL' | grep -cEx 'Branch=(stable|beta)')\""
 
 echo "== Bazzite Portal selections: system"
-JUST_DIR=/usr/share/ublue-os/just
 check "cockpit.service enabled" systemctl is-enabled cockpit.service
 check "base still ships the container cockpit.service starts" test -f /usr/share/containers/systemd/cockpit-container.container
 # Cockpit is for the local machine only. firewalld accepts loopback traffic before it looks at any
@@ -264,8 +283,6 @@ for cask in jetbrains-toolbox-linux lm-studio-linux; do
 done
 check "brew-setup.service, which unpacks Homebrew, is enabled in the base" systemctl is-enabled brew-setup.service
 CRUNCHYROLL_HOOK=/usr/share/ublue-os/user-setup.hooks.d/45-crunchyroll.sh
-check "the Portal still gets Crunchyroll from the project the hook downloads from" grep -rqF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$JUST_DIR"
-check "and the hook asks the same place" grep -qF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$CRUNCHYROLL_HOOK"
 for script in "$SNAP_SETUP" "$DEDUP_SETUP" "$TWEAKS_HOOK" "$CASKS_SETUP" "$CRUNCHYROLL_HOOK"; do
 	check "$script is executable" test -x "$script"
 	check "$script parses" bash -n "$script"
