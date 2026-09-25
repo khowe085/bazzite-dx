@@ -107,3 +107,81 @@ if ! grep -qx 'loadTemplate("io.github.khowe085.bazzite-dx.topBar")' "$LAYOUT"; 
 	grep -qx 'loadTemplate("org.kde.plasma.desktop.defaultPanel")' "$LAYOUT"
 	sed -i 's/^loadTemplate("org\.kde\.plasma\.desktop\.defaultPanel")$/loadTemplate("io.github.khowe085.bazzite-dx.topBar")\nloadTemplate("io.github.khowe085.bazzite-dx.dock")/' "$LAYOUT"
 fi
+
+# System Monitor's Overview page, which a profile shows until it saves a page of its own: the hottest
+# CPU temperature under CPU usage, and the battery's charge rate where the disks were. Edited in place
+# rather than replaced, so Plasma's translations stay. The battery is matched by pattern, like the
+# page's own network and disk sensors, because its sensor is named after the battery's serial number
+# (so a Bluetooth mouse or headset that reports a battery gets a line too, and a machine without a
+# battery shows an empty chart);
+# the two labels are keyed to one battery's sensors (the laptop's this was set up on), so others show
+# the sensors' own names.
+OVERVIEW="${KDE_DEFAULTS_SYSMON_OVERVIEW:-/usr/share/plasma-systemmonitor/overview.page}"
+TEMP_FACE=Face-94212943519072
+BATTERY_FACE=Face-94304568396688
+CPU_FACE=Face-106123380916688
+GPU_FACE=Face-106123406501568
+DISKS_FACE=Face-106123488899456
+page_read() { # page_read <group>... <key>
+	local groups=()
+	while (($# > 1)); do
+		groups+=(--group "$1")
+		shift
+	done
+	kreadconfig6 --file "$OVERVIEW" "${groups[@]}" --key "$1"
+}
+page_write() { # page_write <group>... <key> <value>
+	local groups=()
+	while (($# > 2)); do
+		groups+=(--group "$1")
+		shift
+	done
+	# After --, so a value such as -50 is not taken for an option.
+	kwriteconfig6 --file "$OVERVIEW" "${groups[@]}" --key "$1" -- "$2"
+}
+if [[ "$(page_read page row-0 column-0 section-1 face)" != "$TEMP_FACE" ]]; then
+	# Checked first, unless an earlier run already made the change: CPU, a separator and the GPU in
+	# the first column, and the disks where the battery goes.
+	test "$(page_read page row-0 column-0 section-0 face)" = "$CPU_FACE"
+	test "$(page_read page row-0 column-0 section-1 isSeparator)" = true
+	test "$(page_read page row-0 column-0 section-2 face)" = "$GPU_FACE"
+	test -z "$(page_read page row-0 column-0 section-3 face)"
+	test "$(page_read page row-1 column-0 section-0 face)" = "$DISKS_FACE"
+	# kwriteconfig6 drops comments, among them the file's SPDX licence header; put it back after.
+	header="$(sed -n '/^#/p;/^#/!q' "$OVERVIEW")"
+
+	page_write "$TEMP_FACE" Appearance chartFace org.kde.ksysguard.piechart
+	page_write "$TEMP_FACE" Appearance title Temp
+	page_write "$TEMP_FACE" Sensors highPrioritySensorIds '["cpu/all/maximumTemperature"]'
+	page_write "$TEMP_FACE" Sensors totalSensors '["cpu/all/maximumTemperature"]'
+	page_write "$TEMP_FACE" SensorColors cpu/all/maximumTemperature 233,61,225
+	page_write "$TEMP_FACE" SensorLabels cpu/all/maximumTemperature Max
+	page_write "$TEMP_FACE" org.kde.ksysguard.piechart General rangeAuto false
+	page_write "$TEMP_FACE" org.kde.ksysguard.piechart General rangeFrom 30
+
+	page_write "$BATTERY_FACE" Appearance chartFace org.kde.ksysguard.linechart
+	page_write "$BATTERY_FACE" Appearance title Battery
+	page_write "$BATTERY_FACE" Sensors highPrioritySensorIds '["power/.*/chargeRate"]'
+	page_write "$BATTERY_FACE" Sensors lowPrioritySensorIds '["power/.*/chargePercentage"]'
+	page_write "$BATTERY_FACE" SensorLabels power/1AEE/chargeRate "Charging Rate"
+	page_write "$BATTERY_FACE" SensorLabels power/1AEE/chargePercentage "Charge %"
+	page_write "$BATTERY_FACE" SensorColors power/1AEE/chargeRate 61,233,134
+	page_write "$BATTERY_FACE" SensorColors power/1AEE/chargePercentage 110,61,233
+	page_write "$BATTERY_FACE" org.kde.ksysguard.linechart General rangeAutoY false
+	page_write "$BATTERY_FACE" org.kde.ksysguard.linechart General rangeFromY -50
+
+	# Sections are named after their position: the separator and the GPU move down one.
+	page_write page row-0 column-0 section-3 face "$GPU_FACE"
+	page_write page row-0 column-0 section-3 isSeparator false
+	page_write page row-0 column-0 section-3 name section-3
+	page_write page row-0 column-0 section-2 face ""
+	page_write page row-0 column-0 section-2 isSeparator true
+	page_write page row-0 column-0 section-1 face "$TEMP_FACE"
+	page_write page row-0 column-0 section-1 isSeparator false
+	page_write page row-1 column-0 section-0 face "$BATTERY_FACE"
+	if [[ -n "$header" ]]; then
+		printf '%s\n\n%s\n' "$header" "$(<"$OVERVIEW")" >"${OVERVIEW}.new"
+		chmod --reference="$OVERVIEW" "${OVERVIEW}.new"
+		mv "${OVERVIEW}.new" "$OVERVIEW"
+	fi
+fi

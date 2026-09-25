@@ -4,7 +4,8 @@
 # scaling themselves), kcminputrc (input defaults), kwinrc (top-left screen corner), kscreenlockerrc
 # (no automatic lock, lock after waking from sleep), plasmanotifyrc (where popups appear), the Plasma 5
 # power profiles and the Deck-only files it removes, the Add Panel templates (panels that do not float,
-# the image's own two among them) and Fedora Dark (window decoration, the image's panels in its layout).
+# the image's own two among them), Fedora Dark (window decoration, the image's panels in its layout) and
+# System Monitor's Overview page (CPU temperature, battery).
 # Run inside a container with the repo mounted at /src:
 #   podman run --rm -v "$PWD:/src:ro,Z" <image> /src/tests/test-kde-defaults.sh
 set -uo pipefail
@@ -36,7 +37,7 @@ run_step() {
 		KDE_DEFAULTS_LAYOUT_TEMPLATES="$TEMPLATES" KDE_DEFAULTS_RETURN_SHORTCUT="$tmp/Return.desktop" \
 		KDE_DEFAULTS_IBUS_AUTOSTART="$tmp/ibus.desktop" KDE_DEFAULTS_IBUS_ENV="$tmp/ibus.sh" \
 		KDE_DEFAULTS_BALOOFILERC="$tmp/baloofilerc" KDE_DEFAULTS_PLASMANOTIFYRC="$tmp/plasmanotifyrc" \
-		KDE_DEFAULTS_LNF="$LNF" bash "$STEP"
+		KDE_DEFAULTS_LNF="$LNF" KDE_DEFAULTS_SYSMON_OVERVIEW="$tmp/overview.page" bash "$STEP"
 }
 step_fails() { ! run_step; }
 # kread <file> <group>... <key>: the value KDE's own parser reads from that scratch file.
@@ -69,6 +70,58 @@ EOF
 }
 # The other Bazzite files the step changes (steamdeck-kde-presets, plasma-desktop), the power
 # profiles and the templates shortened.
+# Plasma's /usr/share/plasma-systemmonitor/overview.page (6.7.4), shortened to one translation and
+# the faces the build step touches or keeps next to them.
+write_plasma_overview_page() {
+	cat >"$tmp/overview.page" <<'EOF'
+# SPDX-FileCopyrightText: 2020 Arjen Hiemstra <ahiemstra@heimr.nl>
+
+[Face-106123380916688][Appearance]
+chartFace=org.kde.ksysguard.piechart
+Title=CPU
+Title[de]=Prozessor
+
+[Face-106123380916688][Sensors]
+highPrioritySensorIds=["cpu/all/usage"]
+totalSensors=["cpu/all/usage"]
+
+[Face-106123406501568][Appearance]
+chartFace=org.kde.ksysguard.piechart
+Title=GPU
+
+[Face-106123488899456][Appearance]
+chartFace=org.kde.ksysguard.horizontalbars
+Title=Disks
+
+[Face-106123488899456][Sensors]
+highPrioritySensorIds=["disk/(?!all).*/used"]
+
+[page]
+icon=speedometer
+version=1
+Title=Overview
+
+[page][row-0][column-0][section-0]
+face=Face-106123380916688
+isSeparator=false
+name=section-0
+
+[page][row-0][column-0][section-1]
+face=
+isSeparator=true
+name=section-1
+
+[page][row-0][column-0][section-2]
+face=Face-106123406501568
+isSeparator=false
+name=section-2
+
+[page][row-1][column-0][section-0]
+face=Face-106123488899456
+isSeparator=false
+name=section-0
+EOF
+}
 write_bazzite_files() {
 	write_bazzite_kdeglobals
 	printf '[Libinput][Defaults]\nPointerAccelerationProfile=1\n' >"$tmp/kcminputrc"
@@ -84,6 +137,7 @@ EOF
 	printf '[Desktop Entry]\nName=IBus\nExec=ibus-daemon --panel=/usr/libexec/kimpanel-ibus-panel\n' >"$tmp/ibus.desktop"
 	printf 'export XMODIFIERS= @ im = ibus\n' >"$tmp/ibus.sh"
 	printf '[General]\nonly basic indexing=true\n' >"$tmp/baloofilerc"
+	write_plasma_overview_page
 	rm -rf "$TEMPLATES"
 	mkdir -p "$TEMPLATES"/org.kde.plasma.desktop.{defaultPanel,emptyPanel,appmenubar}/contents
 	# Bazzite's own version of the default panel, which names another panel `panel` further down.
@@ -277,7 +331,13 @@ check "the dock is at the bottom" grep -qx 'panel.location = "bottom"' "$DOCK"
 check "and hides itself" grep -qx 'panel.hiding = "autohide"' "$DOCK"
 # Widget order, left to right, as `addWidget` calls.
 widgets() { sed -n 's/.*addWidget("\([^"]*\)").*/\1/p' "$1" | paste -sd' '; }
-check "the top bar's widgets in order" test "$(widgets "$TOP")" = "org.kde.plasma.systemmonitor.cpu org.kde.plasma.systemmonitor.memory org.kde.plasma.systemmonitor.cpucore org.kde.plasma.systemmonitor.net org.kde.plasma.systemmonitor.diskactivity org.kde.plasma.pager org.kde.plasma.panelspacer org.kde.plasma.systemtray org.kde.plasma.volume org.kde.plasma.cameraindicator org.kde.plasma.networkmanagement org.kde.plasma.bluetooth org.kde.plasma.brightness org.kde.plasma.battery org.kde.plasma.digitalclock org.kde.plasma.userswitcher"
+check "the top bar's widgets in order" test "$(widgets "$TOP")" = "org.kde.plasma.systemmonitor.cpu org.kde.plasma.systemmonitor.memory org.kde.plasma.systemmonitor org.kde.plasma.systemmonitor.cpucore org.kde.plasma.systemmonitor.net org.kde.plasma.systemmonitor.diskactivity org.kde.plasma.pager org.kde.plasma.panelspacer org.kde.plasma.systemtray org.kde.plasma.volume org.kde.plasma.cameraindicator org.kde.plasma.networkmanagement org.kde.plasma.bluetooth org.kde.plasma.brightness org.kde.plasma.battery org.kde.plasma.digitalclock org.kde.plasma.userswitcher"
+# The one generic System Monitor widget: CPU temperature as a pie from 39 degrees.
+sed -n '/addWidget("org.kde.plasma.systemmonitor")/,/^$/p' "$TOP" >"$tmp/temp-widget.js"
+check "the top bar's temperature widget is a pie chart" grep -Fqx 'temperature.writeConfig("chartFace", "org.kde.ksysguard.piechart")' "$tmp/temp-widget.js"
+check "showing the hottest CPU temperature" grep -Fqx "temperature.writeConfig(\"highPrioritySensorIds\", '[\"cpu/all/maximumTemperature\"]')" "$tmp/temp-widget.js"
+check "which is also its total" grep -Fqx "temperature.writeConfig(\"totalSensors\", '[\"cpu/all/maximumTemperature\"]')" "$tmp/temp-widget.js"
+check "from 39 degrees, not an automatic range" bash -c "grep -Fqx 'temperature.writeConfig(\"rangeAuto\", false)' '$tmp/temp-widget.js' && grep -Fqx 'temperature.writeConfig(\"rangeFrom\", 39)' '$tmp/temp-widget.js'"
 check "the dock's widgets in order" test "$(widgets "$DOCK")" = "org.kde.plasma.kickoff org.kde.plasma.icontasks org.kde.plasma.marginsseparator org.kde.plasma.notifications"
 check "no widget in the top bar is also shown inside its tray" bash -c "! sed -n '/\"extraItems\"/,/])/p' '$TOP' | grep -Eq 'plasma\.(volume|cameraindicator|networkmanagement|bluetooth|brightness|battery|notifications)\"'"
 
@@ -294,6 +354,43 @@ cp -r "$LNF" "$tmp/lnf-once"
 check "a second run exits 0" run_step
 check "and changes nothing more there" diff -r "$tmp/lnf-once" "$LNF"
 rm -rf "$tmp/lnf-once"
+
+echo "== System Monitor's Overview page"
+write_bazzite_files
+check "build step exits 0" run_step
+TEMP_FACE=Face-94212943519072
+BATTERY_FACE=Face-94304568396688
+check "the CPU temperature comes right after CPU usage" test "$(kread overview.page page row-0 column-0 section-1 face)" = "$TEMP_FACE"
+check "as a section of its own, not a separator" test "$(kread overview.page page row-0 column-0 section-1 isSeparator)" = false
+check "then the separator" test "$(kread overview.page page row-0 column-0 section-2 isSeparator)" = true
+check "then the GPU" test "$(kread overview.page page row-0 column-0 section-3 face)" = Face-106123406501568
+check "and the section names follow their positions" test "$(kread overview.page page row-0 column-0 section-3 name)" = section-3
+check "the temperature face is a pie" test "$(kread overview.page "$TEMP_FACE" Appearance chartFace)" = org.kde.ksysguard.piechart
+check "titled Temp" test "$(kread overview.page "$TEMP_FACE" Appearance title)" = Temp
+check "of the hottest CPU temperature" test "$(kread overview.page "$TEMP_FACE" Sensors highPrioritySensorIds)" = '["cpu/all/maximumTemperature"]'
+check "labelled Max" test "$(kread overview.page "$TEMP_FACE" SensorLabels cpu/all/maximumTemperature)" = Max
+check "from 30 degrees" test "$(kread overview.page "$TEMP_FACE" org.kde.ksysguard.piechart General rangeFrom)" = 30
+check "the battery takes the disks' place" test "$(kread overview.page page row-1 column-0 section-0 face)" = "$BATTERY_FACE"
+check "as a line chart titled Battery" bash -c "test \"\$(kreadconfig6 --file '$tmp/overview.page' --group $BATTERY_FACE --group Appearance --key chartFace)\" = org.kde.ksysguard.linechart && test \"\$(kreadconfig6 --file '$tmp/overview.page' --group $BATTERY_FACE --group Appearance --key title)\" = Battery"
+check "of any battery's charge rate, not only the laptop's where it was set up" test "$(kread overview.page "$BATTERY_FACE" Sensors highPrioritySensorIds)" = '["power/.*/chargeRate"]'
+check "with its charge percentage in the legend" test "$(kread overview.page "$BATTERY_FACE" Sensors lowPrioritySensorIds)" = '["power/.*/chargePercentage"]'
+check "its y axis from -50" test "$(kread overview.page "$BATTERY_FACE" org.kde.ksysguard.linechart General rangeFromY)" = -50
+check "Plasma's licence header is kept at the top" test "$(head -1 "$tmp/overview.page")" = "# SPDX-FileCopyrightText: 2020 Arjen Hiemstra <ahiemstra@heimr.nl>"
+check "the CPU face keeps its translations" test "$(LANGUAGE=de kreadconfig6 --file "$tmp/overview.page" --group Face-106123380916688 --group Appearance --key Title)" = Prozessor
+check "no sensor colours of one machine's disks or network card" bash -c "! grep -Eq '^(disk/[0-9a-f-]{36}|network/wl)' '$tmp/overview.page'"
+cp "$tmp/overview.page" "$tmp/overview-once"
+check "a second run exits 0" run_step
+check "and changes nothing more" diff "$tmp/overview-once" "$tmp/overview.page"
+
+echo "== Plasma's Overview page no longer has the disks where the battery goes"
+write_bazzite_files
+kwriteconfig6 --file "$tmp/overview.page" --group page --group row-1 --group column-0 --group section-0 --key face Face-106123380916688
+check "build step fails instead of dropping another face" step_fails
+
+echo "== Plasma's Overview page no longer starts with CPU, separator, GPU"
+write_bazzite_files
+kwriteconfig6 --file "$tmp/overview.page" --group page --group row-0 --group column-0 --group section-1 --key isSeparator false
+check "build step fails instead of reshuffling it" step_fails
 
 echo "== Fedora Dark no longer sets a window decoration"
 write_bazzite_files

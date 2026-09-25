@@ -166,6 +166,15 @@ check "from a file older than Konsole's own, so Konsole's menus are used and the
 check "notification popups appear at the top centre" test "$(kreadconfig6 --file /etc/xdg/plasmanotifyrc --group Notifications --key PopupPosition)" = TopCenter
 check "low-priority notifications are kept in the history" test "$(kreadconfig6 --file /etc/xdg/plasmanotifyrc --group Notifications --key LowPriorityHistory)" = true
 
+echo "== System Monitor's Overview page"
+OVERVIEW=/usr/share/plasma-systemmonitor/overview.page
+page_key() { kreadconfig6 --file "$OVERVIEW" "${@:1:$#-1}" --key "${!#}"; }
+check "CPU temperature under CPU usage" test "$(page_key --group page --group row-0 --group column-0 --group section-1 face)" = Face-94212943519072
+check "the GPU still in the first column" test "$(page_key --group page --group row-0 --group column-0 --group section-3 face)" = Face-106123406501568
+check "the battery's charge rate where the disks were" test "$(page_key --group page --group row-1 --group column-0 --group section-0 face)" = Face-94304568396688
+check "for any battery" test "$(page_key --group Face-94304568396688 --group Sensors highPrioritySensorIds)" = '["power/.*/chargeRate"]'
+check "Plasma's translations kept" grep -q '^Title\[de\]=' "$OVERVIEW"
+
 echo "== Power management"
 POWER=/etc/xdg/powerdevilrc
 power() { kreadconfig6 --file "$POWER" --group "$1" --group "$2" --key "$3"; }

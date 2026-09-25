@@ -8,6 +8,21 @@ panel.height = 48
 
 panel.addWidget("org.kde.plasma.systemmonitor.cpu")
 panel.addWidget("org.kde.plasma.systemmonitor.memory")
+
+// The hottest CPU temperature as a pie from 39 degrees. The generic widget has no preset of its own
+// to load over these settings when it starts, unlike the ones above.
+var temperature = panel.addWidget("org.kde.plasma.systemmonitor")
+temperature.currentConfigGroup = ["Appearance"]
+temperature.writeConfig("chartFace", "org.kde.ksysguard.piechart")
+temperature.currentConfigGroup = ["Sensors"]
+temperature.writeConfig("highPrioritySensorIds", '["cpu/all/maximumTemperature"]')
+temperature.writeConfig("totalSensors", '["cpu/all/maximumTemperature"]')
+temperature.currentConfigGroup = ["SensorColors"]
+temperature.writeConfig("cpu/all/maximumTemperature", "195,233,61")
+temperature.currentConfigGroup = ["org.kde.ksysguard.piechart", "General"]
+temperature.writeConfig("rangeAuto", false)
+temperature.writeConfig("rangeFrom", 39)
+
 panel.addWidget("org.kde.plasma.systemmonitor.cpucore")
 panel.addWidget("org.kde.plasma.systemmonitor.net")
 panel.addWidget("org.kde.plasma.systemmonitor.diskactivity")
