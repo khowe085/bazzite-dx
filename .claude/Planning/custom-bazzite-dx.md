@@ -4,6 +4,39 @@ Custom Universal Blue image based on `ghcr.io/ublue-os/bazzite-dx:stable` (KDE, 
 
 Written 2026-09-11. Decisions marked **(K)** were confirmed by Kevin; **(open)** are my defaults, not confirmed.
 
+## State and next steps (2026-09-25)
+
+Read this first when picking the work up on another machine. Kevin continues on the laptop with a fresh user-level Claude setup, so nothing carries over except this repository: no memory notes, no global instructions, skills or agents from the Windows machine where the work so far was done.
+
+**State.** Everything through PR #7 is merged (`2869451`), and `latest` is built from it. The laptop (Framework 13, AMD Ryzen AI 9 HX 370) was freshly installed from the ISO of run 35962659003, whose image is the `pr-7` build of the same source; Kevin has configured it as he wants. That install follows `pr-7` until it is switched with `sudo bootc switch ghcr.io/khowe085/bazzite-dx:latest`. bazzite-dx is built on Bazzite's Deck (handheld/HTPC) edition, `bazzite-deck`, so Deck-flavoured KDE defaults can turn up that Bazzite's desktop edition does not have; the ones that stay on purpose are listed in the "Deck leftovers" row.
+
+**Kevin's rules for this repo, stated in earlier sessions:**
+- **Defaults only (K, 2026-09-23).** Settings ship as image defaults: `/etc/xdg` files, the Add Panel templates and the like. No first-login hooks or Plasma update scripts that rewrite what a profile has already saved. Defaults reach a profile whose first desktop login is on this image, which installing from its ISO provides. The wallpaper update script `picture-of-the-day-default.js` predates this and stays.
+- **One branch and one PR (K, 2026-09-20)** for everything not yet merged (`work/claude/<name>`); separate concerns by commits, not branches. Every PR costs a ~25 minute image build.
+- **Kevin merges PRs himself on GitHub.** This commit went straight to `main` at his explicit instruction; that was a one-time exception.
+- **Commits are signed** (SSH signing through 1Password). If signing fails, ask him; never bypass it. `1Password: failed to fill whole buffer` meant the app was locked.
+- **Tests first, then a blind review** by a fresh reviewer (up to 3 rounds) before a PR, as in "Testing (TDD)" below.
+
+**Verifying without a full image build**, as done so far (with podman on the laptop instead of Docker Desktop):
+- Every `tests/*.sh` script runs in the base image, for example `podman run --rm -v "$PWD:/src:ro,Z" ghcr.io/ublue-os/bazzite-dx:stable bash /src/tests/test-kde-defaults.sh`, or all of them with `just test ghcr.io/ublue-os/bazzite-dx stable`.
+- For `90-verify.sh`, a partial build in a throwaway container of the base: copy `system_files/` to `/` (as `build.sh` does), run the changed build step, then `90-verify.sh`, and read only the sections the change touches; the others fail because the rest of the build did not run.
+
+**Next: Kevin's panels as defaults.** He is setting up the panels on the laptop and will hand over:
+- `~/.config/plasma-org.kde.plasma.desktop-appletsrc`: panels, their widgets in order, and each widget's own settings (for example the Bluetooth widget's `showNumberOfConnectedDevices`, "Show badge with number of connected devices").
+- `~/.config/plasmashellrc`: per-panel height, length, alignment, floating, visibility and opacity, stored per screen resolution.
+- the output of `kscreen-doctor -o`, and the launcher favourites if he changed them (not in those files).
+
+Plasma writes these lazily, so he logs out and back in before copying them. Settings changed in System Settings are in their own files, not these two. **The repository is public: never commit the raw files.** They can hold his user name, home paths, activity IDs or a weather location; commit only the defaults derived from them.
+
+How new profiles get panels today: the default global theme is Fedora Dark, whose layout (`/usr/share/plasma/look-and-feel/org.fedoraproject.fedoradark.desktop/contents/layouts/org.kde.plasma.desktop-layout.js`) loads the Add Panel template `org.kde.plasma.desktop.defaultPanel`. Bazzite modifies that template (its launchers), and `55-kde-defaults.sh` inserts `panel.floating = false` after its `var panel = new Panel`. The exported settings become Plasma scripting calls (`panel.height`, `panel.alignment`, `panel.lengthMode` and lengths, `addWidget`, and `currentConfigGroup` with `writeConfig` for widget settings). Open for Kevin: whether to change the template, which also changes Add Panel → Default Panel, or to leave the templates alone and add the layout elsewhere. Lengths must not be copied per resolution from `plasmashellrc`. The repo has no JavaScript engine to run layout scripts; the wallpaper script was smoke-run once against stub objects.
+
+**Other open items:**
+- After 2026-09-29, when Firefox 157 reaches Flathub stable: change `Branch=beta` to `Branch=stable` in `custom-apps.preinstall` before the beta moves to 158 (see the Flatpaks and Firefox rows).
+- Building an ISO: start **Build ISO** only after that tag's image build has finished. The ISO copies the image from the registry while it builds, and the first ISO got the previous build that way. Its README section does not say this yet.
+- Clean-up on Kevin's side: the `pr-5`, `pr-6` and `pr-7` tags on the GHCR package page (a token needs `read:packages` and `delete:packages`), and the outdated ISO artifact of run 35942041231 (both ISO artifacts expire 2026-12-23).
+- Still unverified on the laptop: the Firefox beta ↔ 1Password link, Git commit signing through 1Password (his in-app setup first), `cosign verify` of the image, and `amdgpu.dcfeaturemask=0x402` in `/proc/cmdline`.
+- Update size: rebuilds without changes cost about 69 MB since `85-dnf-cleanup.sh` (measured 2026-09-25, `pr-7` to `latest`); the first switch from an older build downloads more.
+
 ## Scope
 
 | Item | Approach | Status |
@@ -98,9 +131,10 @@ tests/                        script tests (bash, run in a container via `just t
 
 1. ~~Create the GitHub repo `khowe085/bazzite-dx`~~ Done 2026-09-19 (public). Nothing pushed yet.
 2. ~~Generate the cosign key pair, add `cosign.key` as repo secret `SIGNING_SECRET`, commit `cosign.pub`~~ Done 2026-09-19 (empty password, as the workflow expects). `cosign.key` stays local and gitignored.
-3. Push; first build publishes `ghcr.io/khowe085/bazzite-dx:latest`.
-4. On the machine: `sudo bootc switch ghcr.io/khowe085/bazzite-dx:latest`, reboot.
+3. ~~Push; first build publishes `ghcr.io/khowe085/bazzite-dx:latest`.~~ Done 2026-09-19.
+4. ~~On the machine: `sudo bootc switch ghcr.io/khowe085/bazzite-dx:latest`, reboot.~~ Replaced 2026-09-24 by installing from the ISO (README, "Installing from an ISO"); that install then needs the switch to `latest`.
 5. Run the EmuDeck wizard once (choices listed in README); enter the Patreon token there.
+6. 1Password in-app setup: SSH agent and commit signing (README, "SSH keys and Git signing with 1Password").
 
 ## Risks / uncertainty
 
