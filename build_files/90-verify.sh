@@ -92,6 +92,8 @@ check "Fedora Dark is the default global theme" grep -qx "LookAndFeelPackage=$LN
 check "kdeglobals names one global theme only" test "$(grep -c '^LookAndFeelPackage=' /etc/xdg/kdeglobals)" = 1
 check "the base ships that theme" test -f "/usr/share/plasma/look-and-feel/$LNF/metadata.json"
 check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=false' /etc/xdg/kdeglobals
+# With --type bool, kreadconfig6 exits 0 only for true, however false is spelled.
+check "X11 apps scale themselves, KDE's default rather than the Deck's" kreadconfig6 --file /etc/xdg/kdeglobals --group KScreen --key XwaylandClientsScale --type bool --default true
 check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
 check "in the directory the base uses for its own Plasma update script" test -f "$UPDATES_DIR/bazzite-pins.js"
 # Bazzite's Vapor theme writes its wallpaper into every profile it sets up; the script has to know
@@ -104,9 +106,47 @@ check "with the Astronomy (NASA) provider" grep -q 'writeConfig("Provider", "apo
 check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.potd/metadata.json
 check "and that provider" test -f /usr/lib64/qt6/plugins/potd/plasma_potd_apodprovider.so
 # Read back with KDE's own parser: KWin's Touchpad group covers touchpads, Pointer the other pointing devices.
+input_default() { kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$1" --key "$2"; }
 for type in Touchpad Pointer Keyboard; do
-	check "natural scrolling is the default for $type devices" test "$(kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$type" --key NaturalScroll)" = true
+	check "natural scrolling is the default for $type devices" test "$(input_default "$type" NaturalScroll)" = true
+	check "no pointer acceleration is the default for $type devices" test "$(input_default "$type" PointerAccelerationProfile)" = 1
+	check "tap-and-drag lets the finger lift briefly by default for $type devices" test "$(input_default "$type" TapDragLock)" = true
 done
+check "the top-left screen corner does nothing" test "$(kreadconfig6 --file /etc/xdg/kwinrc --group Effect-overview --key BorderActivate)" = 9
+check "the screen does not lock by itself" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key Autolock)" = false
+check "and System Settings shows Never for that" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key Timeout)" = 0
+check "but it locks after waking from sleep" test "$(kreadconfig6 --file /etc/xdg/kscreenlockerrc --group Daemon --key LockOnResume)" = true
+# bazzite-dx is built on bazzite-deck, so it has steamdeck-kde-presets' Deck-only files; the desktop edition does not.
+for f in /etc/skel/Desktop/Return.desktop /etc/xdg/autostart/ibus.desktop /etc/xdg/plasma-workspace/env/ibus.sh /etc/xdg/baloofilerc; do
+	check "the Deck-only $f is gone" test ! -e "$f"
+done
+for layout in /usr/share/plasma/layout-templates/*/contents/layout.js; do
+	template=${layout%/contents/layout.js}
+	check "the Add Panel template ${template##*/} makes a panel that does not float" bash -c "sed -n 2p '$layout' | grep -qx 'panel.floating = false'"
+done
+
+echo "== Power management"
+POWER=/etc/xdg/powerdevilrc
+power() { kreadconfig6 --file "$POWER" --group "$1" --group "$2" --key "$3"; }
+check "no package ships $POWER, which the image's replaces whole" bash -c "! rpm -qf $POWER"
+check "Bazzite's Plasma 5 power profiles, which powerdevil would copy into new profiles, are gone" test ! -e /etc/xdg/powermanagementprofilesrc
+# profile, then sleep, dim and screen-off timeouts in seconds, lid action, power profile
+while read -r profile sleep dim off lid ppd; do
+	check "$profile: sleep when inactive" test "$(power "$profile" SuspendAndShutdown AutoSuspendAction)" = 1
+	check "$profile: after $sleep s" test "$(power "$profile" SuspendAndShutdown AutoSuspendIdleTimeoutSec)" = "$sleep"
+	check "$profile: the power button puts the machine to sleep" test "$(power "$profile" SuspendAndShutdown PowerButtonAction)" = 1
+	check "$profile: closing the lid does action $lid" test "$(power "$profile" SuspendAndShutdown LidAction)" = "$lid"
+	check "$profile: the screen dims" test "$(power "$profile" Display DimDisplayWhenIdle)" = true
+	check "$profile: after $dim s" test "$(power "$profile" Display DimDisplayIdleTimeoutSec)" = "$dim"
+	check "$profile: the screen turns off" test "$(power "$profile" Display TurnOffDisplayWhenIdle)" = true
+	check "$profile: after $off s" test "$(power "$profile" Display TurnOffDisplayIdleTimeoutSec)" = "$off"
+	check "$profile: whether locked or not" test "$(power "$profile" Display TurnOffDisplayIdleTimeoutWhenLockedSec)" = -2
+	check "$profile: power profile $ppd" test "$(power "$profile" Performance PowerProfile)" = "$ppd"
+done <<'EOF'
+AC 1800 900 1800 0 performance
+Battery 600 300 600 1 balanced
+LowBattery 300 120 300 1 power-saver
+EOF
 
 echo "== Tailscale"
 check "tailscaled enabled" systemctl is-enabled tailscaled.service
@@ -241,6 +281,11 @@ check "gh package installed" rpm -q gh
 check "gh runs" gh --version
 check "tea installed" test -x /usr/bin/tea
 check "tea runs and reports a version" bash -c 'tea --version | grep -Eq "[0-9]+\.[0-9]+\.[0-9]+"'
+
+echo "== dnf bookkeeping"
+check "no dnf usage counter or repo state under /var/lib/dnf" test ! -e /var/lib/dnf
+check "no dnf install history" bash -c '! ls /usr/lib/sysimage/libdnf5/transaction_history.sqlite* 2>/dev/null'
+check "dnf's package state is still there" test -f /usr/lib/sysimage/libdnf5/packages.toml
 
 if ((fails > 0)); then
 	echo "$fails check(s) failed"

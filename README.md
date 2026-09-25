@@ -14,7 +14,8 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | Firefox flatpak ↔ 1Password | Firefox beta Flatpak plus the `xdg-native-messaging-proxy` route (see below) |
 | `gh` and `tea` | GitHub's CLI from Fedora's `gh` package; Gitea's CLI `tea` (also works with Forgejo) as the latest release binary from dl.gitea.com, checked against its published SHA-256 |
 | Tailscale | Already in Bazzite; `tailscaled` is enabled at build, run `sudo tailscale up` once |
-| KDE defaults | Global theme Fedora Dark instead of Bazzite's Vapor (`LookAndFeelPackage` in `/etc/xdg/kdeglobals`), and Picture of the Day from the "Astronomy (NASA)" provider as the desktop background (a Plasma update script, run once per user). Natural scrolling for touchpads and mice (`[Libinput][Defaults]` groups in `/etc/xdg/kcminputrc`, which KWin reads per device type). All three are defaults: a global theme you picked yourself, a picture you set as wallpaper or another wallpaper type, and a scroll direction you set for a device all stay, and whatever you choose afterwards in System Settings sticks. The lock and login screens are not changed |
+| KDE defaults | Global theme Fedora Dark instead of Bazzite's Vapor (`LookAndFeelPackage` in `/etc/xdg/kdeglobals`), and Picture of the Day from the "Astronomy (NASA)" provider as the desktop background (a Plasma update script, run once per user). For touchpads and mice: natural scrolling, no pointer acceleration, and tap-and-drag that allows briefly lifting the finger (`[Libinput][Defaults]` groups in `/etc/xdg/kcminputrc`, which KWin reads per device type). No action in the top-left screen corner (`/etc/xdg/kwinrc`), and the screen never locks by itself but does lock after waking from sleep (`/etc/xdg/kscreenlockerrc`). bazzite-dx is built on Bazzite's Deck (handheld/HTPC) edition and so carries Deck presets its desktop edition leaves out. Removed here: the "Return to Gaming Mode" shortcut on new users' desktops, the IBus input-method daemon at login, Baloo indexing file names only, and X11 apps being scaled by the compositor, which blurs them on a scaled display. Kept: the Deck's 11 pt fonts, its window rule for the Steam on-screen keyboard, and Wi-Fi connections shared system-wide by default. These are defaults: a global theme you picked yourself, a picture you set as wallpaper or another wallpaper type, and whatever you set for a device, the corner or the lock all stay, and whatever you choose afterwards in System Settings sticks. Panels do not float (the Add Panel templates, which a new profile's default layout uses too). The look of the lock and login screens is not changed |
+| Power management | Per power state (`/etc/xdg/powerdevilrc`): on AC, dim after 15 minutes, screen off after 30, sleep after 30, closing the lid does nothing, Performance profile; on battery 5, 10 and 10 minutes, the lid sleeps, Balanced; on low battery 2, 5 and 5 minutes, the lid sleeps, Power Save. In all three the power button sleeps and the screen-off time applies whether the screen is locked or not. Bazzite's Steam Deck profiles (`/etc/xdg/powermanagementprofilesrc`, Plasma 5) are removed, because powerdevil copies them into every new profile at its first login. Changes made in System Settings afterwards stay. Power profiles and the non-floating panel reach profiles whose first desktop login is on this image, as after installing from its ISO; a profile set up on stock Bazzite before `bootc switch` has already saved Bazzite's power values and a floating panel |
 | EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
 | Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
@@ -218,6 +219,25 @@ Sunshine, Boxtron, Netflix, and adding the media apps to Steam.
    ```
 
    then reboot.
+
+## Installing from an ISO
+
+The KDE and power defaults reach a profile whose first desktop login is on this image. Installing from
+an ISO of it gets you that; installing stock Bazzite and then running `bootc switch` does not, because
+stock Bazzite has already saved its own power values and a floating panel into the profile by then.
+
+The ISO is Bazzite's own live installer (`installer/`, copied from Bazzite), set up to install this image:
+
+1. Actions → **Build ISO** → Run workflow, tag `latest` (or `pr-<number>` for a pull request's build).
+   The ISO and its checksum are the run's `iso` artifact.
+2. Write it to a USB stick and boot it. It starts a live Bazzite session with the same installer as
+   Bazzite's ISO; choose the disk, encryption and your user there.
+3. On a UEFI machine the installer queues the key Bazzite's kernel is signed with, whether Secure Boot
+   is on or not. At the first reboot the MOK manager asks for it: choose "Enroll MOK", continue, and
+   enter `universalblue`. If the firmware has the key already, nothing is asked.
+
+The installed system follows the tag the ISO was built from. After installing from a `pr-<number>` ISO,
+switch to `latest` once the pull request is merged, as described next.
 
 ## Testing a pull request on the machine
 
