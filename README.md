@@ -14,13 +14,13 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | Firefox flatpak ↔ 1Password | Firefox beta Flatpak plus the `xdg-native-messaging-proxy` route (see below) |
 | `gh` and `tea` | GitHub's CLI from Fedora's `gh` package; Gitea's CLI `tea` (also works with Forgejo) as the latest release binary from dl.gitea.com, checked against its published SHA-256 |
 | Tailscale | Already in Bazzite; `tailscaled` is enabled at build, run `sudo tailscale up` once |
-| KDE defaults | Global theme Fedora Dark instead of Bazzite's Vapor (`LookAndFeelPackage` in `/etc/xdg/kdeglobals`), and Picture of the Day from the "Astronomy (NASA)" provider as the desktop background (a Plasma update script, run once per user). For touchpads and mice: natural scrolling, no pointer acceleration, and tap-and-drag that allows briefly lifting the finger (`[Libinput][Defaults]` groups in `/etc/xdg/kcminputrc`, which KWin reads per device type). No action in the top-left screen corner (`/etc/xdg/kwinrc`), and the screen never locks by itself but does lock after waking from sleep (`/etc/xdg/kscreenlockerrc`). bazzite-dx is built on Bazzite's Deck (handheld/HTPC) edition and so carries Deck presets its desktop edition leaves out. Removed here: the "Return to Gaming Mode" shortcut on new users' desktops, the IBus input-method daemon at login, Baloo indexing file names only, and X11 apps being scaled by the compositor, which blurs them on a scaled display. Kept: the Deck's 11 pt fonts, its window rule for the Steam on-screen keyboard, and Wi-Fi connections shared system-wide by default. These are defaults: a global theme you picked yourself, a picture you set as wallpaper or another wallpaper type, and whatever you set for a device, the corner or the lock all stay, and whatever you choose afterwards in System Settings sticks. Panels do not float (the Add Panel templates, which a new profile's default layout uses too). The look of the lock and login screens is not changed |
+| KDE defaults | Global theme Fedora Dark instead of Bazzite's Vapor (`LookAndFeelPackage` in `/etc/xdg/kdeglobals`), and Picture of the Day from the "Astronomy (NASA)" provider as the desktop background (a Plasma update script, run once per user). For touchpads and mice: natural scrolling, no pointer acceleration, and tap-and-drag that allows briefly lifting the finger (`[Libinput][Defaults]` groups in `/etc/xdg/kcminputrc`, which KWin reads per device type). No action in the top-left screen corner (`/etc/xdg/kwinrc`), and the screen never locks by itself but does lock after waking from sleep (`/etc/xdg/kscreenlockerrc`). bazzite-dx is built on Bazzite's Deck (handheld/HTPC) edition and so carries Deck presets its desktop edition leaves out. Removed here: the "Return to Gaming Mode" shortcut on new users' desktops, the IBus input-method daemon at login, Baloo indexing file names only, and X11 apps being scaled by the compositor, which blurs them on a scaled display. Kept: the Deck's 11 pt fonts, its window rule for the Steam on-screen keyboard, and Wi-Fi connections shared system-wide by default. These are defaults: a global theme you picked yourself, a picture you set as wallpaper or another wallpaper type, and whatever you set for a device, the corner or the lock all stay, and whatever you choose afterwards in System Settings sticks. Panels do not float (the Add Panel templates, which a new profile's default layout uses too). A new profile gets two panels instead of Bazzite's one, from two Add Panel templates of this image that Fedora Dark's desktop layout loads (`/usr/share/plasma/layout-templates/io.github.khowe085.bazzite-dx.*`; Add Panel lists them as "bazzite-dx Top Bar" and "bazzite-dx Dock"): a 48 px bar across the top with the CPU, memory, CPU temperature, per-core, network and disk monitors, the pager, the system tray, then volume, camera, network, Bluetooth, brightness, battery with percentage, a clock with the date below it ("Thu Sep 24"; Los Angeles and London in its tooltip) and the user's picture; and a 64 px dock at the bottom centre that hides itself, with the launcher (Framework logo), the task manager pinning the browser, Dolphin and Konsole, and notifications. The window decoration is Plastik instead of Breeze (Fedora Dark's defaults, which outrank `/etc/xdg`). Notification popups appear at the top centre, and low-priority ones stay in the history (`/etc/xdg/plasmanotifyrc`). Konsole starts with its built-in profile instead of Bazzite's Vapor one, and pastes with Ctrl+V and Shift+Ins instead of Ctrl+Shift+V and Shift+Ins (a shortcut file in `/etc/skel`, which Konsole merges into its own menus). Konsole then keeps Ctrl+V for itself, so programs in the terminal no longer receive it (the shell's quoted-insert, Vim's visual block mode); Settings → Configure Keyboard Shortcuts puts it back. System Monitor's Overview page shows the CPU temperature under CPU usage and the battery's charge rate and charge in place of the disks (Plasma's page, edited in the build; a page you save in the app replaces it for you). It matches every battery ksystemstats reports, so a Bluetooth mouse or headset with a battery adds a line, and a machine without a battery shows an empty chart there. The look of the lock and login screens is not changed |
 | Power management | Per power state (`/etc/xdg/powerdevilrc`): on AC, dim after 15 minutes, screen off after 30, sleep after 30, closing the lid does nothing, Performance profile; on battery 5, 10 and 10 minutes, the lid sleeps, Balanced; on low battery 2, 5 and 5 minutes, the lid sleeps, Power Save. In all three the power button sleeps and the screen-off time applies whether the screen is locked or not. Bazzite's Steam Deck profiles (`/etc/xdg/powermanagementprofilesrc`, Plasma 5) are removed, because powerdevil copies them into every new profile at its first login. Changes made in System Settings afterwards stay. Power profiles and the non-floating panel reach profiles whose first desktop login is on this image, as after installing from its ISO; a profile set up on stock Bazzite before `bootc switch` has already saved Bazzite's power values and a floating panel |
-| EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
+| EmuDeck | Latest AppImage from GitHub baked into `/usr/lib/emudeck`; a first-login hook copies it to `~/Applications/EmuDeck.AppImage` with a menu entry, so nothing is downloaded at login |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
-| Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
+| Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled. The ISO carries them too, so a machine that is offline at its first boot (Wi-Fi set up in the first-boot setup) has them straight away |
 | Bazzite Portal selections | Cockpit, DisplayLink, virtualization, Framework fan control, HDMI 2.1 on AMD, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3, JetBrains Toolbox, LM Studio and Crunchyroll, switched on up front (see below) |
-| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below) |
+| Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below). The box also has the host's `gh`, `tea` and 1Password SSH agent and commit signing, and Lua 5.1 with LuaRocks, luacheck and busted |
 | SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
 
 The last build step, `build_files/90-verify.sh`, checks all of the above and fails the build otherwise.
@@ -88,6 +88,11 @@ Optional, from the same docs: to verify signatures locally, create `~/.ssh/allow
 `git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers`. Tools that ignore `ssh_config`
 need `SSH_AUTH_SOCK=~/.1password/agent.sock` instead.
 
+The `ubuntu` distrobox (see Claude Desktop) gets the same system side, so once the two steps above are
+done, Git and SSH in the box sign and authenticate through the host's 1Password as well: your home
+directory, with the agent socket and `~/.gitconfig`, is shared with the box already. Until then,
+commits in the box stop with the same error as on the host.
+
 ## EmuDeck
 
 The hook only places the AppImages. Run EmuDeck once and pick in the wizard:
@@ -100,6 +105,15 @@ The hook only places the AppImages. Run EmuDeck once and pick in the wizard:
 
 The hook replaces `~/Applications/Eden.AppImage` when the image carries a newer release than it placed
 before. An Eden you put there yourself (no `.eden.image-version` stamp next to it) is left alone.
+
+EmuDeck and Crunchyroll come from the image the same way, and every image build takes their latest
+release, so `bootc upgrade` brings a new one and the next login replaces the copy in `~/Applications`
+with it (`/usr/libexec/image-appimage`; any version change counts, so booting an older deployment
+puts its version back). That happens only while the file is still the one the image put there: once
+EmuDeck has updated itself, or you replaced, moved or deleted the file, it is left as it is. A copy
+downloaded at first login by earlier builds of this image is taken over at the next login if it is
+still the release the image carries (EmuDeck's file then becomes `EmuDeck.AppImage`); one that
+EmuDeck has updated since stays EmuDeck's.
 
 To ship a different Eden flavour (`steamdeck`, `rog-ally`, `legacy`, or the `gcc-standard` builds), pass
 `--build-arg EDEN_VARIANT=steamdeck-clang-pgo` to `podman build` / `docker build`, or change the `ARG`
@@ -116,7 +130,20 @@ own `distrobox.ini` uses for the same image, and is a general-purpose Ubuntu box
   the manifest behind Bazzite's `ujust setup-distrobox-app`.
 - The box's init hook is `/usr/libexec/claude-distrobox-init` from this image, which the box sees under
   `/run/host`. On the first start it adds Anthropic's apt repository, refuses any signing key other than
-  the fingerprint Anthropic documents, and runs `apt install claude-desktop`. Later starts skip all of it.
+  the fingerprint Anthropic documents, and runs `apt install claude-desktop`. It also installs Lua 5.1 for
+  development from Ubuntu (`lua5.1`, `liblua5.1-0-dev`, `luarocks`, `lua-check` for luacheck, and
+  `build-essential` for LuaRocks' C modules) and busted with `luarocks --lua-version 5.1`. Later starts
+  install only what is missing and are otherwise instant. When the Lua tools cannot be installed (offline),
+  the box still starts and the next start tries again.
+  Before that, on every start, it gives the box the host's SSH agent and commit signing through 1Password:
+  `/opt/1Password` linked to the host's copy, the host's signing settings in the box's `/etc/gitconfig` and
+  its SSH drop-in in `/etc/ssh/ssh_config.d`. It links the host's `gh` and `tea` to the same paths in the box
+  (Ubuntu's `gh` is older, and its `tea` is another program); `gh auth setup-git` points Git at `/usr/bin/gh`,
+  and their logins and config are in your home directory, which the box shares, so `gh` and pushes over HTTPS
+  work in the box without logging in again. Because the hook comes from the host image, an image update
+  reaches a box that already exists at its next start, a setting the host drops included. A 1Password, gh or tea
+  installed in the box itself is left alone. A step of this part that fails only prints a warning, so the box
+  still starts.
 - A first-login hook starts `/usr/libexec/claude-distrobox-setup` as a detached user unit, so the other
   setup hooks are not held up by what is roughly a 1 GB download, once per user. It reads the manifest
   under `/usr`, so a locally edited `apps.ini` cannot make it silently skip the box. An attempt that fails
@@ -168,7 +195,7 @@ as not installed. Ignore its offer to install it.
 | Enable globally upgrading FSR3.1+ to FSR4 (RDNA3) | First login: `~/.config/environment.d/99-proton-fsr4-rdna3.conf`. Only Proton-GE, Proton-EM and similar builds act on it |
 | JetBrains Toolbox, LM Studio | First login: the Portal's Homebrew cask installs, one after the other in a detached unit; follow it with `journalctl --user -u portal-brew-casks-setup`. Each is retried at every login until it has worked once |
 | Get Media Apps: YouTube, Jellyfin | The VacuumTube and Jellyfin Desktop Flatpaks |
-| Get Media Apps: Crunchyroll | First login: the AppImage the Portal downloads (github.com/aarron-lee/crunchyroll-linux, an unofficial client), placed at `~/Applications/Crunchyroll.AppImage` with a menu entry instead of being handed to Gear Lever. Placed once; move or delete it and it stays that way |
+| Get Media Apps: Crunchyroll | The AppImage the Portal downloads (github.com/aarron-lee/crunchyroll-linux, an unofficial client), baked into `/usr/lib/crunchyroll`; at first login it is copied to `~/Applications/Crunchyroll.AppImage` with a menu entry instead of being handed to Gear Lever. Updated with the image, as below; move or delete it and it stays that way |
 
 Still done by hand in the Portal, because their recipes need a desktop session or a running Steam:
 Sunshine, Boxtron, Netflix, and adding the media apps to Steam.
@@ -229,7 +256,9 @@ stock Bazzite has already saved its own power values and a floating panel into t
 The ISO is Bazzite's own live installer (`installer/`, copied from Bazzite), set up to install this image:
 
 1. Actions → **Build ISO** → Run workflow, tag `latest` (or `pr-<number>` for a pull request's build).
-   The ISO and its checksum are the run's `iso` artifact.
+   Run it from the ref the tag was built from (`main` for `latest`, the pull request's branch for
+   `pr-<number>`): the flatpaks the ISO carries come from that checkout. The ISO and its checksum are
+   the run's `iso` artifact.
 2. Write it to a USB stick and boot it. It starts a live Bazzite session with the same installer as
    Bazzite's ISO; choose the disk, encryption and your user there.
 3. On a UEFI machine the installer queues the key Bazzite's kernel is signed with, whether Secure Boot
@@ -289,7 +318,8 @@ docker run --rm -v "$PWD:/src:ro" bazzite-dx:local bash /src/tests/test-emudeck-
   from `/etc/passwd` at install time, which has no desktop users inside a build). Users with other UIDs
   cannot use the CLI/SSH-agent authorisation prompts.
 - The Eden and EmuDeck downloads are trusted on HTTPS alone: Eden publishes no checksums for its release
-  assets, and Bazzite's own `ujust get-emudeck` verifies nothing either. `tea` is checked against a
+  assets, EmuDeck's assets predate GitHub's recorded digests, and Bazzite's own `ujust get-emudeck`
+  verifies nothing either. Crunchyroll is checked against the SHA-256 GitHub records for the asset. `tea` is checked against a
   SHA-256 that Gitea serves from the same host as the binary, which catches a broken download but not a
   compromised server; Gitea publishes no signature for it.
 - Claude Desktop in the distrobox has not been run on a real desktop yet. Anthropic supports Ubuntu
