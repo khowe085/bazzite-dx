@@ -18,7 +18,7 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | Power management | Per power state (`/etc/xdg/powerdevilrc`): on AC, dim after 15 minutes, screen off after 30, sleep after 30, closing the lid does nothing, Performance profile; on battery 5, 10 and 10 minutes, the lid sleeps, Balanced; on low battery 2, 5 and 5 minutes, the lid sleeps, Power Save. In all three the power button sleeps and the screen-off time applies whether the screen is locked or not. Bazzite's Steam Deck profiles (`/etc/xdg/powermanagementprofilesrc`, Plasma 5) are removed, because powerdevil copies them into every new profile at its first login. Changes made in System Settings afterwards stay. Power profiles and the non-floating panel reach profiles whose first desktop login is on this image, as after installing from its ISO; a profile set up on stock Bazzite before `bootc switch` has already saved Bazzite's power values and a floating panel |
 | EmuDeck | First-login hook downloads the latest EmuDeck AppImage into `~/Applications` and adds a menu entry |
 | Eden | Latest AppImage from git.eden-emu.dev baked into `/usr/lib/eden`; the same hook copies it to `~/Applications/Eden.AppImage`, where EmuDeck expects it |
-| Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled |
+| Flatpaks | Obsidian, Spotify, OBS Studio, Discord, VacuumTube (YouTube), Jellyfin Desktop and Firefox beta are installed at boot via `flatpak preinstall` (`/usr/share/flatpak/preinstall.d/custom-apps.preinstall`); uninstalling one keeps it uninstalled. The ISO carries them too, so a machine that is offline at its first boot (Wi-Fi set up in the first-boot setup) has them straight away |
 | Bazzite Portal selections | Cockpit, DisplayLink, virtualization, Framework fan control, HDMI 2.1 on AMD, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3, JetBrains Toolbox, LM Studio and Crunchyroll, switched on up front (see below) |
 | Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below). The box also has the host's `gh`, `tea` and 1Password SSH agent and commit signing, and Lua 5.1 with LuaRocks, luacheck and busted |
 | SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
@@ -247,7 +247,9 @@ stock Bazzite has already saved its own power values and a floating panel into t
 The ISO is Bazzite's own live installer (`installer/`, copied from Bazzite), set up to install this image:
 
 1. Actions → **Build ISO** → Run workflow, tag `latest` (or `pr-<number>` for a pull request's build).
-   The ISO and its checksum are the run's `iso` artifact.
+   Run it from the ref the tag was built from (`main` for `latest`, the pull request's branch for
+   `pr-<number>`): the flatpaks the ISO carries come from that checkout. The ISO and its checksum are
+   the run's `iso` artifact.
 2. Write it to a USB stick and boot it. It starts a live Bazzite session with the same installer as
    Bazzite's ISO; choose the disk, encryption and your user there.
 3. On a UEFI machine the installer queues the key Bazzite's kernel is signed with, whether Secure Boot
