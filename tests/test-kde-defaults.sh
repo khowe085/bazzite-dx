@@ -376,7 +376,8 @@ check "of any battery's charge rate, not only the laptop's where it was set up" 
 check "with its charge percentage in the legend" test "$(kread overview.page "$BATTERY_FACE" Sensors lowPrioritySensorIds)" = '["power/.*/chargePercentage"]'
 check "its y axis from -50" test "$(kread overview.page "$BATTERY_FACE" org.kde.ksysguard.linechart General rangeFromY)" = -50
 check "Plasma's licence header is kept at the top" test "$(head -1 "$tmp/overview.page")" = "# SPDX-FileCopyrightText: 2020 Arjen Hiemstra <ahiemstra@heimr.nl>"
-check "the CPU face keeps its translations" test "$(LANGUAGE=de kreadconfig6 --file "$tmp/overview.page" --group Face-106123380916688 --group Appearance --key Title)" = Prozessor
+# LANG as well: with no locale set, as in CI's container, Qt runs in C and ignores LANGUAGE.
+check "the CPU face keeps its translations" test "$(LANG=C.UTF-8 LANGUAGE=de kreadconfig6 --file "$tmp/overview.page" --group Face-106123380916688 --group Appearance --key Title)" = Prozessor
 check "no sensor colours of one machine's disks or network card" bash -c "! grep -Eq '^(disk/[0-9a-f-]{36}|network/wl)' '$tmp/overview.page'"
 cp "$tmp/overview.page" "$tmp/overview-once"
 check "a second run exits 0" run_step
