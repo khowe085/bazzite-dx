@@ -36,7 +36,7 @@ run_step() {
 		KDE_DEFAULTS_PLASMA5_POWER_PROFILES="$tmp/powermanagementprofilesrc" \
 		KDE_DEFAULTS_LAYOUT_TEMPLATES="$TEMPLATES" KDE_DEFAULTS_RETURN_SHORTCUT="$tmp/Return.desktop" \
 		KDE_DEFAULTS_IBUS_AUTOSTART="$tmp/ibus.desktop" KDE_DEFAULTS_IBUS_ENV="$tmp/ibus.sh" \
-		KDE_DEFAULTS_BALOOFILERC="$tmp/baloofilerc" KDE_DEFAULTS_PLASMANOTIFYRC="$tmp/plasmanotifyrc" \
+		KDE_DEFAULTS_BALOOFILERC="$tmp/baloofilerc" KDE_DEFAULTS_BAZZITE_PINS="$tmp/bazzite-pins.js" KDE_DEFAULTS_PLASMANOTIFYRC="$tmp/plasmanotifyrc" \
 		KDE_DEFAULTS_LNF="$LNF" KDE_DEFAULTS_SYSMON_OVERVIEW="$tmp/overview.page" bash "$STEP"
 }
 step_fails() { ! run_step; }
@@ -137,6 +137,7 @@ EOF
 	printf '[Desktop Entry]\nName=IBus\nExec=ibus-daemon --panel=/usr/libexec/kimpanel-ibus-panel\n' >"$tmp/ibus.desktop"
 	printf 'export XMODIFIERS= @ im = ibus\n' >"$tmp/ibus.sh"
 	printf '[General]\nonly basic indexing=true\n' >"$tmp/baloofilerc"
+	printf 'widget.writeConfig("launchers", ["preferred://browser", "applications:steam.desktop"]);\n' >"$tmp/bazzite-pins.js"
 	write_plasma_overview_page
 	rm -rf "$TEMPLATES"
 	mkdir -p "$TEMPLATES"/org.kde.plasma.desktop.{defaultPanel,emptyPanel,appmenubar}/contents
@@ -309,6 +310,16 @@ write_bazzite_files
 rm -f "$tmp/powermanagementprofilesrc"
 check "build step exits 0" run_step
 
+echo "== Bazzite's update script that pins apps to an empty task manager"
+write_bazzite_files
+check "build step exits 0" run_step
+check "is removed, so the dock stays with nothing pinned" test ! -e "$tmp/bazzite-pins.js"
+
+echo "== the base no longer ships it"
+write_bazzite_files
+rm -f "$tmp/bazzite-pins.js"
+check "build step exits 0" run_step
+
 echo "== Add Panel templates"
 write_bazzite_files
 cp -r "$TEMPLATES" "$tmp/templates-before"
@@ -331,14 +342,23 @@ check "the dock is at the bottom" grep -qx 'panel.location = "bottom"' "$DOCK"
 check "and hides itself" grep -qx 'panel.hiding = "autohide"' "$DOCK"
 # Widget order, left to right, as `addWidget` calls.
 widgets() { sed -n 's/.*addWidget("\([^"]*\)").*/\1/p' "$1" | paste -sd' '; }
-check "the top bar's widgets in order" test "$(widgets "$TOP")" = "org.kde.plasma.systemmonitor.cpu org.kde.plasma.systemmonitor.memory org.kde.plasma.systemmonitor org.kde.plasma.systemmonitor.cpucore org.kde.plasma.systemmonitor.net org.kde.plasma.systemmonitor.diskactivity org.kde.plasma.pager org.kde.plasma.panelspacer org.kde.plasma.systemtray org.kde.plasma.volume org.kde.plasma.cameraindicator org.kde.plasma.networkmanagement org.kde.plasma.bluetooth org.kde.plasma.brightness org.kde.plasma.battery org.kde.plasma.digitalclock org.kde.plasma.userswitcher"
-# The one generic System Monitor widget: CPU temperature as a pie from 40 to 100 degrees.
-sed -n '/addWidget("org.kde.plasma.systemmonitor")/,/^$/p' "$TOP" >"$tmp/temp-widget.js"
-check "the top bar's temperature widget is a pie chart" grep -Fqx 'temperature.writeConfig("chartFace", "org.kde.ksysguard.piechart")' "$tmp/temp-widget.js"
-check "showing the hottest CPU temperature" grep -Fqx "temperature.writeConfig(\"highPrioritySensorIds\", '[\"cpu/all/maximumTemperature\"]')" "$tmp/temp-widget.js"
-check "which is also its total" grep -Fqx "temperature.writeConfig(\"totalSensors\", '[\"cpu/all/maximumTemperature\"]')" "$tmp/temp-widget.js"
-check "from 40 to 100 degrees, not an automatic range" bash -c "grep -Fqx 'temperature.writeConfig(\"rangeAuto\", false)' '$tmp/temp-widget.js' && grep -Fqx 'temperature.writeConfig(\"rangeFrom\", 40)' '$tmp/temp-widget.js' && grep -Fqx 'temperature.writeConfig(\"rangeTo\", 100)' '$tmp/temp-widget.js'"
+check "the top bar's widgets in order" test "$(widgets "$TOP")" = "org.kde.plasma.systemmonitor.cpu org.kde.plasma.systemmonitor.memory io.github.khowe085.bazzite-dx.cpuhotspot org.kde.plasma.systemmonitor.cpucore org.kde.plasma.systemmonitor.net org.kde.plasma.systemmonitor.diskactivity org.kde.plasma.pager org.kde.plasma.panelspacer org.kde.plasma.systemtray org.kde.plasma.volume org.kde.plasma.cameraindicator org.kde.plasma.networkmanagement org.kde.plasma.bluetooth org.kde.plasma.brightness org.kde.plasma.battery org.kde.plasma.digitalclock org.kde.plasma.userswitcher"
+# CPU Hotspot, a preset of this image: the hottest CPU temperature as a pie from 40 to 100 degrees.
+# The preset starts as a text face and the template picks the pie after writing its range, so the pie
+# is set up with that range in the first session too.
+PRESET="$SRC/system_files/usr/share/plasma/plasmoids/io.github.khowe085.bazzite-dx.cpuhotspot"
+preset() { kreadconfig6 --file "$PRESET/contents/config/faceproperties" --group "$1" --key "$2"; }
+check "CPU Hotspot is a System Monitor preset" bash -c "grep -Fq '\"X-Plasma-RootPath\": \"org.kde.plasma.systemmonitor\"' '$PRESET/metadata.json' && grep -Fq '\"Id\": \"io.github.khowe085.bazzite-dx.cpuhotspot\"' '$PRESET/metadata.json'"
+check "titled CPU Hotspot" grep -Fq '"Name": "CPU Hotspot"' "$PRESET/metadata.json"
+check "showing the hottest CPU temperature" test "$(preset Config highPrioritySensorIds)" = '["cpu/all/maximumTemperature"]'
+check "which is also its total" test "$(preset Config totalSensors)" = '["cpu/all/maximumTemperature"]'
+check "starting as a text face" test "$(preset Config chartFace)" = org.kde.ksysguard.textonly
+sed -n '/addWidget("io.github.khowe085.bazzite-dx.cpuhotspot")/,/^$/p' "$TOP" >"$tmp/hotspot.js"
+check "the top bar gives it a range from 40 to 100 degrees, not an automatic one" bash -c "grep -Fqx 'hotspot.currentConfigGroup = [\"org.kde.ksysguard.piechart\", \"General\"]' '$tmp/hotspot.js' && grep -Fqx 'hotspot.writeConfig(\"rangeAuto\", false)' '$tmp/hotspot.js' && grep -Fqx 'hotspot.writeConfig(\"rangeFrom\", 40)' '$tmp/hotspot.js' && grep -Fqx 'hotspot.writeConfig(\"rangeTo\", 100)' '$tmp/hotspot.js'"
+check "then makes it a pie chart" test "$(sed -n 's/^hotspot\.writeConfig("\([^"]*\)".*/\1/p' "$tmp/hotspot.js" | tail -1)" = chartFace
+check "a pie chart" grep -Fqx 'hotspot.writeConfig("chartFace", "org.kde.ksysguard.piechart")' "$tmp/hotspot.js"
 check "the dock's widgets in order" test "$(widgets "$DOCK")" = "org.kde.plasma.kickoff org.kde.plasma.icontasks org.kde.plasma.marginsseparator org.kde.plasma.notifications"
+check "nothing is pinned to the dock" bash -c "! grep -q launchers '$DOCK'"
 check "no widget in the top bar is also shown inside its tray" bash -c "! sed -n '/\"extraItems\"/,/])/p' '$TOP' | grep -Eq 'plasma\.(volume|cameraindicator|networkmanagement|bluetooth|brightness|battery|notifications)\"'"
 
 echo "== Fedora Dark, the default global theme"

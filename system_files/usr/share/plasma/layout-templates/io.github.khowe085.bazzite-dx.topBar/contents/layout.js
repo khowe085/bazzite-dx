@@ -9,20 +9,20 @@ panel.height = 48
 panel.addWidget("org.kde.plasma.systemmonitor.cpu")
 panel.addWidget("org.kde.plasma.systemmonitor.memory")
 
-// The hottest CPU temperature as a pie from 40 to 100 degrees. The generic widget has no preset of
-// its own to load over these settings when it starts, unlike the ones above.
-var temperature = panel.addWidget("org.kde.plasma.systemmonitor")
-temperature.currentConfigGroup = ["Appearance"]
-temperature.writeConfig("chartFace", "org.kde.ksysguard.piechart")
-temperature.currentConfigGroup = ["Sensors"]
-temperature.writeConfig("highPrioritySensorIds", '["cpu/all/maximumTemperature"]')
-temperature.writeConfig("totalSensors", '["cpu/all/maximumTemperature"]')
-temperature.currentConfigGroup = ["SensorColors"]
-temperature.writeConfig("cpu/all/maximumTemperature", "195,233,61")
-temperature.currentConfigGroup = ["org.kde.ksysguard.piechart", "General"]
-temperature.writeConfig("rangeAuto", false)
-temperature.writeConfig("rangeFrom", 40)
-temperature.writeConfig("rangeTo", 100)
+// The hottest CPU temperature as a pie from 40 to 100 degrees, titled CPU Hotspot: a preset of this
+// image, like the widgets around it. A pie reads its range once, when it is set up, and settings
+// written afterwards only reach it when Plasma restarts, so a pie made by addWidget would keep an
+// automatic range (which fills it whatever the temperature) for the whole first session. Presets
+// cannot set the range either: Plasma 6.7 looks for it in the wrong file. So the preset starts as a
+// text face, and the pie is chosen here after its range: when the script ends, Plasma reloads the
+// widget, sets up the pie, and the pie reads the range written here.
+var hotspot = panel.addWidget("io.github.khowe085.bazzite-dx.cpuhotspot")
+hotspot.currentConfigGroup = ["org.kde.ksysguard.piechart", "General"]
+hotspot.writeConfig("rangeAuto", false)
+hotspot.writeConfig("rangeFrom", 40)
+hotspot.writeConfig("rangeTo", 100)
+hotspot.currentConfigGroup = ["Appearance"]
+hotspot.writeConfig("chartFace", "org.kde.ksysguard.piechart")
 
 panel.addWidget("org.kde.plasma.systemmonitor.cpucore")
 panel.addWidget("org.kde.plasma.systemmonitor.net")

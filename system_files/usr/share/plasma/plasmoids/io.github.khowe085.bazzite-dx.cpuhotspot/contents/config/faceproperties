@@ -1,0 +1,7 @@
+[Config]
+chartFace=org.kde.ksysguard.textonly
+highPrioritySensorIds=["cpu/all/maximumTemperature"]
+totalSensors=["cpu/all/maximumTemperature"]
+
+[SensorColors]
+cpu/all/maximumTemperature=195,233,61

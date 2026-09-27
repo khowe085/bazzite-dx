@@ -19,15 +19,9 @@ var kickoff = panel.addWidget("org.kde.plasma.kickoff")
 kickoff.currentConfigGroup = ["General"]
 kickoff.writeConfig("icon", "framework")
 
-// Launchers set here also keep Bazzite's update script (bazzite-pins.js), which only fills an empty
-// list, from pinning its own.
-var tasks = panel.addWidget("org.kde.plasma.icontasks")
-tasks.currentConfigGroup = ["General"]
-tasks.writeConfig("launchers", [
-    "preferred://browser",
-    "applications:org.kde.dolphin.desktop",
-    "applications:org.kde.konsole.desktop"
-])
+// Nothing pinned: the task manager shows open windows only. Bazzite's update script that pins its
+// own apps to an empty task manager (bazzite-pins.js) is removed by the KDE build step.
+panel.addWidget("org.kde.plasma.icontasks")
 
 panel.addWidget("org.kde.plasma.marginsseparator")
 panel.addWidget("org.kde.plasma.notifications")

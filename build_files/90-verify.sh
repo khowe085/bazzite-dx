@@ -115,7 +115,8 @@ check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=fa
 # With --type bool, kreadconfig6 exits 0 only for true, however false is spelled.
 check "X11 apps scale themselves, KDE's default rather than the Deck's" kreadconfig6 --file /etc/xdg/kdeglobals --group KScreen --key XwaylandClientsScale --type bool --default true
 check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
-check "in the directory the base uses for its own Plasma update script" test -f "$UPDATES_DIR/bazzite-pins.js"
+check "in the directory Plasma runs update scripts from" test -f "$UPDATES_DIR/unlock_widgets.js"
+check "Bazzite's update script no longer pins apps to the dock" test ! -e "$UPDATES_DIR/bazzite-pins.js"
 # Bazzite's Vapor theme writes its wallpaper into every profile it sets up; the script has to know
 # that exact value to tell it from a picture the user chose.
 VAPOR_WALLPAPER=/usr/share/wallpapers/convergence.jxl

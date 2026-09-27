@@ -73,6 +73,12 @@ rm -f "${KDE_DEFAULTS_RETURN_SHORTCUT:-/etc/skel/Desktop/Return.desktop}" \
 	"${KDE_DEFAULTS_IBUS_ENV:-/etc/xdg/plasma-workspace/env/ibus.sh}" \
 	"${KDE_DEFAULTS_BALOOFILERC:-/etc/xdg/baloofilerc}"
 
+# Bazzite's Plasma update script, which pins Steam, Lutris, Bazaar and others to any task manager
+# with nothing pinned. Plasma runs update scripts once per profile, right after a new profile's
+# layout, so it would fill the image's dock, which has nothing pinned on purpose. Profiles made
+# before this image already ran it.
+rm -f "${KDE_DEFAULTS_BAZZITE_PINS:-/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/bazzite-pins.js}"
+
 # The power profiles are in /etc/xdg/powerdevilrc (system_files). Bazzite also ships the Steam
 # Deck's Plasma 5 profiles, which powerdevil copies into a new user's own powerdevilrc at the first
 # login, where they would beat those defaults. Nothing else reads the Plasma 5 file.
