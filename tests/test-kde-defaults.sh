@@ -332,12 +332,12 @@ check "and hides itself" grep -qx 'panel.hiding = "autohide"' "$DOCK"
 # Widget order, left to right, as `addWidget` calls.
 widgets() { sed -n 's/.*addWidget("\([^"]*\)").*/\1/p' "$1" | paste -sd' '; }
 check "the top bar's widgets in order" test "$(widgets "$TOP")" = "org.kde.plasma.systemmonitor.cpu org.kde.plasma.systemmonitor.memory org.kde.plasma.systemmonitor org.kde.plasma.systemmonitor.cpucore org.kde.plasma.systemmonitor.net org.kde.plasma.systemmonitor.diskactivity org.kde.plasma.pager org.kde.plasma.panelspacer org.kde.plasma.systemtray org.kde.plasma.volume org.kde.plasma.cameraindicator org.kde.plasma.networkmanagement org.kde.plasma.bluetooth org.kde.plasma.brightness org.kde.plasma.battery org.kde.plasma.digitalclock org.kde.plasma.userswitcher"
-# The one generic System Monitor widget: CPU temperature as a pie from 39 degrees.
+# The one generic System Monitor widget: CPU temperature as a pie from 40 to 100 degrees.
 sed -n '/addWidget("org.kde.plasma.systemmonitor")/,/^$/p' "$TOP" >"$tmp/temp-widget.js"
 check "the top bar's temperature widget is a pie chart" grep -Fqx 'temperature.writeConfig("chartFace", "org.kde.ksysguard.piechart")' "$tmp/temp-widget.js"
 check "showing the hottest CPU temperature" grep -Fqx "temperature.writeConfig(\"highPrioritySensorIds\", '[\"cpu/all/maximumTemperature\"]')" "$tmp/temp-widget.js"
 check "which is also its total" grep -Fqx "temperature.writeConfig(\"totalSensors\", '[\"cpu/all/maximumTemperature\"]')" "$tmp/temp-widget.js"
-check "from 39 degrees, not an automatic range" bash -c "grep -Fqx 'temperature.writeConfig(\"rangeAuto\", false)' '$tmp/temp-widget.js' && grep -Fqx 'temperature.writeConfig(\"rangeFrom\", 39)' '$tmp/temp-widget.js'"
+check "from 40 to 100 degrees, not an automatic range" bash -c "grep -Fqx 'temperature.writeConfig(\"rangeAuto\", false)' '$tmp/temp-widget.js' && grep -Fqx 'temperature.writeConfig(\"rangeFrom\", 40)' '$tmp/temp-widget.js' && grep -Fqx 'temperature.writeConfig(\"rangeTo\", 100)' '$tmp/temp-widget.js'"
 check "the dock's widgets in order" test "$(widgets "$DOCK")" = "org.kde.plasma.kickoff org.kde.plasma.icontasks org.kde.plasma.marginsseparator org.kde.plasma.notifications"
 check "no widget in the top bar is also shown inside its tray" bash -c "! sed -n '/\"extraItems\"/,/])/p' '$TOP' | grep -Eq 'plasma\.(volume|cameraindicator|networkmanagement|bluetooth|brightness|battery|notifications)\"'"
 
