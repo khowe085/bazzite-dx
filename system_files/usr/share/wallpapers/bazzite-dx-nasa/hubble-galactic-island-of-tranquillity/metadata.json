@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, A. Filippenko, J. Lyman"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-galactic-island-of-tranquillity",
+        "License": "CC-BY-2.0",
+        "Name": "Galactic Island of Tranquillity",
+        "Website": "https://www.flickr.com/photos/nasahubble/53438393550/"
+    }
+}

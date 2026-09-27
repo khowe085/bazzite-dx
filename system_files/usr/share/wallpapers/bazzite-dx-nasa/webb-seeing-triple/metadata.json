@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, P. Kelly"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-seeing-triple",
+        "License": "CC-BY-2.0",
+        "Name": "Seeing Triple",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/52719670994/"
+    }
+}

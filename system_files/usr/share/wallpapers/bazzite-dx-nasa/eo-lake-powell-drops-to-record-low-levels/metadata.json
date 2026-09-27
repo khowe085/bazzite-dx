@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey and lake elevation data from the U.S. Bureau of Reclamation."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-lake-powell-drops-to-record-low-levels",
+        "License": "public-domain",
+        "Name": "Lake Powell Drops to Record-Low Levels",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/lake-powell-drops-to-record-low-levels/"
+    }
+}

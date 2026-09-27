@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory image by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-colonial-national-historical-park",
+        "License": "public-domain",
+        "Name": "Colonial National Historical Park",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/colonial-national-historical-park-92382/"
+    }
+}

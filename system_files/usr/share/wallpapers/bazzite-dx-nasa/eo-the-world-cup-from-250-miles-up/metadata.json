@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-the-world-cup-from-250-miles-up",
+        "License": "public-domain",
+        "Name": "The World Cup From 250 Miles Up",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/the-world-cup-from-250-miles-up/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-captures-new-view-of-colorful-veil",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Captures New View of Colorful Veil",
+        "Website": "https://www.flickr.com/photos/nasahubble/54356431528/"
+    }
+}

@@ -1,2 +1,7 @@
 # Everything here is consumed inside a Linux image; CRLF in a shell script or unit file breaks it.
 * text=auto eol=lf
+
+# Wallpapers (system_files/usr/share/wallpapers): never touch line endings in image data.
+*.jpg binary
+*.png binary
+*.jxl binary

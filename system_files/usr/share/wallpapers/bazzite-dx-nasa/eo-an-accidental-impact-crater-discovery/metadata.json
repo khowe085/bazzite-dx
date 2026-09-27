@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-an-accidental-impact-crater-discovery",
+        "License": "public-domain",
+        "Name": "An Accidental Impact Crater Discovery",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/an-accidental-impact-crater-discovery/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI, Samuel Crowe (UVA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-reveals-new-features-in-heart-of-milky-way-nircam",
+        "License": "CC-BY-2.0",
+        "Name": "NASA's Webb Reveals New Features in Heart of Milky Way (NIRCAM image)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/53344798019/"
+    }
+}

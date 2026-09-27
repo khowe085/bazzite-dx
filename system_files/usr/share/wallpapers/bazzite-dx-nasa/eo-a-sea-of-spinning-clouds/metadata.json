@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory image by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-a-sea-of-spinning-clouds",
+        "License": "public-domain",
+        "Name": "A Sea of Spinning Clouds",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/a-sea-of-spinning-clouds/"
+    }
+}

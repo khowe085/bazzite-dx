@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-ice-island-survives-run-in-with-joe-island",
+        "License": "public-domain",
+        "Name": "Ice Island Survives Run-In With Joe Island",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/iceberg-from-petermann-glacier-speeds-away/"
+    }
+}

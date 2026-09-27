@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-ice-moves-out-of-aniak",
+        "License": "public-domain",
+        "Name": "Ice Moves Out of Aniak",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/ice-moves-out-of-aniak/"
+    }
+}

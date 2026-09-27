@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-cyclone-rains-spur-papua-new-guinea-landslides",
+        "License": "public-domain",
+        "Name": "Cyclone Rains Spur Papua New Guinea Landslides",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/cyclone-rains-spur-papua-new-guinea-landslides/"
+    }
+}

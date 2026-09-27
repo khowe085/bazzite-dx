@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-cartwheel-galaxy-nircam-and-miri-composite-image",
+        "License": "CC-BY-2.0",
+        "Name": "Cartwheel Galaxy (NIRCam and MIRI Composite Image)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/52258939646/"
+    }
+}

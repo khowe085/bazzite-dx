@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-captures-m88-on-journey-to-center-of-virgo-cluster",
+        "License": "CC0-1.0",
+        "Name": "Hubble Captures M88 on Journey to Center of Virgo Cluster",
+        "Website": "https://www.flickr.com/photos/nasahubble/55301169976/"
+    }
+}

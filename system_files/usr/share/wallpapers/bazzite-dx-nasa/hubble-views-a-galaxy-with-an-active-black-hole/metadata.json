@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-views-a-galaxy-with-an-active-black-hole",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Views a Galaxy with an Active Black Hole",
+        "Website": "https://www.flickr.com/photos/nasahubble/51975270086/"
+    }
+}

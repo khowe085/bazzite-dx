@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-shaping-the-emerald-city",
+        "License": "public-domain",
+        "Name": "Shaping the Emerald City",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/shaping-the-emerald-city/"
+    }
+}

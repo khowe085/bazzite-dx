@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA and CSA, A. Martel."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-a-spiral-amongst-thousands",
+        "License": "CC-BY-2.0",
+        "Name": "A Spiral Amongst Thousands",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/52660766241/"
+    }
+}

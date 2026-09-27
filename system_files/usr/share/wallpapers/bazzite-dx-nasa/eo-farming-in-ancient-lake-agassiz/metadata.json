@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-farming-in-ancient-lake-agassiz",
+        "License": "public-domain",
+        "Name": "Farming in Ancient Lake Agassiz",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/farming-in-ancient-lake-agassiz/"
+    }
+}

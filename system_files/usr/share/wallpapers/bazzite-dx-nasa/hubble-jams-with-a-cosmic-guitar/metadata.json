@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA and M. West (Lowell Observatory); Processing: Gladys Kober (NASA/Catholic University of America)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-jams-with-a-cosmic-guitar",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Jams With A Cosmic Guitar",
+        "Website": "https://www.flickr.com/photos/nasahubble/54379989586/"
+    }
+}

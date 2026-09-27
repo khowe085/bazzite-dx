@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, ESA/Hubble, Roger Cohen (RU)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-globular-cluster-terzan-12",
+        "License": "CC-BY-2.0",
+        "Name": "Globular Cluster Terzan 12",
+        "Website": "https://www.flickr.com/photos/nasahubble/53434520245/"
+    }
+}

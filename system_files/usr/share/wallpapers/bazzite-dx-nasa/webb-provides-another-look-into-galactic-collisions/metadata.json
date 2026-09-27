@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-provides-another-look-into-galactic-collisions",
+        "License": "CC-BY-2.0",
+        "Name": "Webb Provides Another Look Into Galactic Collisions (NIRCam and MIRI)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54004594840/"
+    }
+}

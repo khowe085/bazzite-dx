@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, A. Leroy"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-striking-star-clusters-and-irregular-clumps",
+        "License": "CC-BY-4.0",
+        "Name": "Striking star clusters and irregular clumps",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55491800186/"
+    }
+}

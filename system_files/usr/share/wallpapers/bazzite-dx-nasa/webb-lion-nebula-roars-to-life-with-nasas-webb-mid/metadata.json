@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI. Image Processing: A. Pagan (STScI)."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-lion-nebula-roars-to-life-with-nasas-webb-mid",
+        "License": "CC-BY-4.0",
+        "Name": "Lion Nebula Roars to Life With NASA’s Webb (Mid + Near-infrared)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55455270035/"
+    }
+}

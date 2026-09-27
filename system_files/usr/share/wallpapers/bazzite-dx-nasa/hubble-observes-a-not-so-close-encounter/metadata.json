@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-observes-a-not-so-close-encounter",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Observes a Not-So-Close Encounter",
+        "Website": "https://www.flickr.com/photos/nasahubble/51916620217/"
+    }
+}

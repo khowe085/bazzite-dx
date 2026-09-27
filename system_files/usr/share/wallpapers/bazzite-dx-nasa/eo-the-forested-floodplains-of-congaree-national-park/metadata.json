@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory image by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-the-forested-floodplains-of-congaree-national-park",
+        "License": "public-domain",
+        "Name": "The Forested Floodplains of Congaree National Park",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/the-forested-floodplains-of-congaree-national-park/"
+    }
+}

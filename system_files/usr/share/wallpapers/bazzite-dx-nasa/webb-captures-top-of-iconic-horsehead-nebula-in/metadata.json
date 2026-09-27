@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, Karl Misselt (University of Arizona), Alain Abergel (AIM Paris-Saclay)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-captures-top-of-iconic-horsehead-nebula-in",
+        "License": "CC-BY-2.0",
+        "Name": "Webb Captures Top of Iconic Horsehead Nebula in Unprecedented Detail (NIRCam)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/53686360156/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory image by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-ever-restless-mount-dukono-erupts",
+        "License": "public-domain",
+        "Name": "Ever Restless Mount Dukono Erupts",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/ever-restless-mount-dukono-erupts/"
+    }
+}

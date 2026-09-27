@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, A. Newman, M. Akhshik, K. Whitaker"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-cosmic-lens-flare",
+        "License": "CC-BY-2.0",
+        "Name": "Cosmic Lens Flare",
+        "Website": "https://www.flickr.com/photos/nasahubble/52714909672/"
+    }
+}

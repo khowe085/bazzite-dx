@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-an-early-look-at-fall-color-in-canada",
+        "License": "public-domain",
+        "Name": "An Early Look at Fall Color in Canada",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/an-early-look-at-fall-color-in-canada/"
+    }
+}

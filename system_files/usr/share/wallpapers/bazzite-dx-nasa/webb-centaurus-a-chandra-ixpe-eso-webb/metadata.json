@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "X-ray: (Chandra) NASA/CXC/SAO, X-ray (IXPE): NASA/MSFC; Optical: ESO; Infrared: NASA/ESA/CSA/STScI; Image Processing: NASA/CXC/SAO/L. Frattare, K. Arcand, and J. Major"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-centaurus-a-chandra-ixpe-eso-webb",
+        "License": "CC-BY-4.0",
+        "Name": "Centaurus A (Chandra + IXPE + ESO + Webb)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55486893492/"
+    }
+}

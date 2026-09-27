@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-purple-haze-aurora",
+        "License": "public-domain",
+        "Name": "Purple Haze Aurora",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/purple-haze-aurora/"
+    }
+}

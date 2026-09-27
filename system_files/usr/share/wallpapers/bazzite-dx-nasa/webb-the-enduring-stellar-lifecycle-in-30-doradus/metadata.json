@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "X-ray: NASA/CXC/Penn State Univ./L. Townsley et al.; IR: NASA/ESA/CSA/STScI/JWST ERO Production Team"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-the-enduring-stellar-lifecycle-in-30-doradus",
+        "License": "CC-BY-2.0",
+        "Name": "The Enduring Stellar Lifecycle in 30 Doradus (Composite: Infrared + X-ray)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/52633392046/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, J. Lee and the PHANGS-JWST and PHANGS-HST Teams"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-reveals-ic-5332",
+        "License": "CC-BY-2.0",
+        "Name": "Webb Reveals IC 5332",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/52388530181/"
+    }
+}

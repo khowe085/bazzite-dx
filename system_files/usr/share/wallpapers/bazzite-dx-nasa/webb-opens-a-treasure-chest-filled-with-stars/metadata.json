@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, M. Reiter"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-opens-a-treasure-chest-filled-with-stars",
+        "License": "CC-BY-4.0",
+        "Name": "Webb opens a Treasure Chest filled with stars",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55457472091/"
+    }
+}

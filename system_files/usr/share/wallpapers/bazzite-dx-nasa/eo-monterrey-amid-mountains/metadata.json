@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-monterrey-amid-mountains",
+        "License": "public-domain",
+        "Name": "Monterrey Amid Mountains",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/monterrey-amid-mountains/"
+    }
+}

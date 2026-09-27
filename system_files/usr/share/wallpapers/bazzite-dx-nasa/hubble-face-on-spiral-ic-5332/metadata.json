@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, R. Chandar, J. Lee and the PHANGS-HST team"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-face-on-spiral-ic-5332",
+        "License": "CC-BY-2.0",
+        "Name": "Face-On Spiral IC 5332",
+        "Website": "https://www.flickr.com/photos/nasahubble/53435087300/"
+    }
+}

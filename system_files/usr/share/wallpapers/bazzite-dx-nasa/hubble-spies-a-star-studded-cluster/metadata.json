@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-spies-a-star-studded-cluster",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Spies a Star-Studded Cluster",
+        "Website": "https://www.flickr.com/photos/nasahubble/52296314606/"
+    }
+}

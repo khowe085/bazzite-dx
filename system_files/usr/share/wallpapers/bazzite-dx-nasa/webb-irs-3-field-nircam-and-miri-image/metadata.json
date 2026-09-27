@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, F. Peißker, J. Lu, F. Yusef-Zadeh, N. B. Sabha, C. Chan"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-irs-3-field-nircam-and-miri-image",
+        "License": "CC-BY-4.0",
+        "Name": "IRS 3 Field (NIRCam and MIRI image)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55459350878/"
+    }
+}

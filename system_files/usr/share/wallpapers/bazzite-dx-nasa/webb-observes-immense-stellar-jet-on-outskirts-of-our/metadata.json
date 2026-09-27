@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI, Yu Cheng (NAOJ)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-observes-immense-stellar-jet-on-outskirts-of-our",
+        "License": "CC-BY-4.0",
+        "Name": "NASA’s Webb Observes Immense Stellar Jet on Outskirts of Our Milky Way (NIRCam Image)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54778067481/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-webb-hubble-examine-galaxy-pair",
+        "License": "CC-BY-2.0",
+        "Name": "NASA’s Webb, Hubble Examine Galaxy Pair",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54107357754/"
+    }
+}

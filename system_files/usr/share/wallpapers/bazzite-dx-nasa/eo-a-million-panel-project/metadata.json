@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-a-million-panel-project",
+        "License": "public-domain",
+        "Name": "A Million-Panel Project",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/a-million-panel-project/"
+    }
+}

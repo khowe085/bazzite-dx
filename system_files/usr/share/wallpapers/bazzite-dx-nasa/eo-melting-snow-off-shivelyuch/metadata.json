@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory image by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-melting-snow-off-shivelyuch",
+        "License": "public-domain",
+        "Name": "Melting Snow Off Shivelyuch",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/melting-snow-off-shivelyuch/"
+    }
+}

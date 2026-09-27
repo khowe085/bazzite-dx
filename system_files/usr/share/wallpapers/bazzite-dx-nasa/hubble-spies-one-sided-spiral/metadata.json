@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-spies-one-sided-spiral",
+        "License": "CC0-1.0",
+        "Name": "Hubble Spies One-Sided Spiral",
+        "Website": "https://www.flickr.com/photos/nasahubble/55442773489/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, V. Almendros-Abad, M. Guarcello, K. Monsch, and the EWOCS team."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-dwarf-stars-in-a-glittering-sky",
+        "License": "CC-BY-4.0",
+        "Name": "Dwarf stars in a glittering sky",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54999783655/"
+    }
+}

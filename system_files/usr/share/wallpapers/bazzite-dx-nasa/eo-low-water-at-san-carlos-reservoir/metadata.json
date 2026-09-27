@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-low-water-at-san-carlos-reservoir",
+        "License": "public-domain",
+        "Name": "Low Water at San Carlos Reservoir",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/low-water-at-san-carlos-reservoir/"
+    }
+}

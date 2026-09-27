@@ -110,25 +110,40 @@ check "bazzite-flatpak-manager.service still exists in the base" test -f /usr/li
 echo "== KDE defaults"
 LNF=org.fedoraproject.fedoradark.desktop
 UPDATES_DIR=/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates
-POTD_SCRIPT="$UPDATES_DIR/picture-of-the-day-default.js"
+WALLPAPER_SCRIPT="$UPDATES_DIR/nasa-slideshow-default.js"
+SLIDES=/usr/share/wallpapers/bazzite-dx-nasa
 check "Fedora Dark is the default global theme" grep -qx "LookAndFeelPackage=$LNF" /etc/xdg/kdeglobals
 check "kdeglobals names one global theme only" test "$(grep -c '^LookAndFeelPackage=' /etc/xdg/kdeglobals)" = 1
 check "the base ships that theme" test -f "/usr/share/plasma/look-and-feel/$LNF/metadata.json"
 check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=false' /etc/xdg/kdeglobals
 # With --type bool, kreadconfig6 exits 0 only for true, however false is spelled.
 check "X11 apps scale themselves, KDE's default rather than the Deck's" kreadconfig6 --file /etc/xdg/kdeglobals --group KScreen --key XwaylandClientsScale --type bool --default true
-check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
+check "wallpaper update script shipped" test -f "$WALLPAPER_SCRIPT"
 check "in the directory Plasma runs update scripts from" test -f "$UPDATES_DIR/unlock_widgets.js"
 check "Bazzite's update script no longer pins apps to the dock" test ! -e "$UPDATES_DIR/bazzite-pins.js"
 # Bazzite's Vapor theme writes its wallpaper into every profile it sets up; the script has to know
 # that exact value to tell it from a picture the user chose.
 VAPOR_WALLPAPER=/usr/share/wallpapers/convergence.jxl
 check "Bazzite's Vapor theme still gives new profiles that wallpaper" grep -Fq "writeConfig(\"Image\", \"$VAPOR_WALLPAPER\")" /usr/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/plasmoidsetupscripts/org.kde.plasma.folder.js
-check "and the script counts it as untouched" grep -Fq "\"$VAPOR_WALLPAPER\"" "$POTD_SCRIPT"
-check "the script selects the Picture of the Day wallpaper" grep -q 'wallpaperPlugin = "org.kde.potd"' "$POTD_SCRIPT"
-check "with the Astronomy (NASA) provider" grep -q 'writeConfig("Provider", "apod")' "$POTD_SCRIPT"
-check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.potd/metadata.json
-check "and that provider" test -f /usr/lib64/qt6/plugins/potd/plasma_potd_apodprovider.so
+check "and the script counts it as untouched" grep -Fq "\"$VAPOR_WALLPAPER\"" "$WALLPAPER_SCRIPT"
+check "the script selects the slideshow wallpaper" grep -q 'wallpaperPlugin = "org.kde.slideshow"' "$WALLPAPER_SCRIPT"
+check "over the pictures this image ships" grep -Fq "\"$SLIDES/\"" "$WALLPAPER_SCRIPT"
+check "changing once a day" grep -q 'writeConfig("SlideInterval", 86400)' "$WALLPAPER_SCRIPT"
+check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.slideshow/metadata.json
+check "the script still counts Picture of the Day's NASA provider as untouched" grep -q '"apod"' "$WALLPAPER_SCRIPT"
+check "the old Picture of the Day script is gone" test ! -e "$UPDATES_DIR/picture-of-the-day-default.js"
+# Each picture is a Plasma wallpaper package: metadata.json and one image in contents/images named
+# WIDTHxHEIGHT, the name Plasma picks a package's image by.
+check "the slideshow has its pictures" test "$(find "$SLIDES" -mindepth 1 -maxdepth 1 -type d | wc -l)" -ge 100
+check "and their credits" test -s "$SLIDES/CREDITS.md"
+malformed_slides() {
+	local pkg
+	for pkg in "$SLIDES"/*/; do
+		[[ -s "$pkg/metadata.json" && "$(find "$pkg/contents/images" -type f -regextype posix-extended -regex '.*/[0-9]+x[0-9]+\.(jpg|png|jxl)' | wc -l)" == 1 ]] || echo "$pkg"
+	done
+}
+check "each is a wallpaper package with one image" test -z "$(malformed_slides)"
+check "the base can read JPEG XL pictures" test -f /usr/lib64/qt6/plugins/imageformats/kimg_jxl.so
 # Read back with KDE's own parser: KWin's Touchpad group covers touchpads, Pointer the other pointing devices.
 input_default() { kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$1" --key "$2"; }
 for type in Touchpad Pointer Keyboard; do

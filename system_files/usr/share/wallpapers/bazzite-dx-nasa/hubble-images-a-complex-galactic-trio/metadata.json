@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-images-a-complex-galactic-trio",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Images a Complex Galactic Trio",
+        "Website": "https://www.flickr.com/photos/nasahubble/52265233534/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-bountiful-roebuck-bay",
+        "License": "public-domain",
+        "Name": "Bountiful Roebuck Bay",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/bountiful-roebuck-bay/"
+    }
+}

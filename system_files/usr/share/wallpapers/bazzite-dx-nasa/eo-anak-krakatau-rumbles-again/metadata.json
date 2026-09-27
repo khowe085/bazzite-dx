@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey, and VIIRS data from NASA EOSDIS LANCE, GIBS/Worldview, and the Suomi National Polar-orbiting Partnership."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-anak-krakatau-rumbles-again",
+        "License": "public-domain",
+        "Name": "Anak Krakatau Rumbles Again",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/anak-krakatau-rumbles-again/"
+    }
+}

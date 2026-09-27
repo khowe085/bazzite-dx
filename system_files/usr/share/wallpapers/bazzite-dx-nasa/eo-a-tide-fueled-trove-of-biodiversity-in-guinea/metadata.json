@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-a-tide-fueled-trove-of-biodiversity-in-guinea",
+        "License": "public-domain",
+        "Name": "A Tide-Fueled Trove of Biodiversity in Guinea-Bissau",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/a-tide-fueled-trove-of-biodiversity-in-guinea-bissau/"
+    }
+}

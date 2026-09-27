@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "X-ray: NASA/CXC/SAO; Optical: NASA/ESA/STScI; Infrared: NASA/ESA/CSA/STScI; Image Processing: NASA/CXC/SAO/L. Frattare"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-ngc-4258-chandra-hubble-webb",
+        "License": "CC-BY-4.0",
+        "Name": "NGC 4258 (Chandra + Hubble + Webb)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55487966583/"
+    }
+}

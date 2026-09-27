@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-cascade-volcanoes-shrouded-in-smoke",
+        "License": "public-domain",
+        "Name": "Cascade Volcanoes Shrouded in Smoke",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/cascade-volcanoes-shrouded-in-smoke/"
+    }
+}

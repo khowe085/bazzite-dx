@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-peers-at-peculiar-pair-of-galaxies",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Peers at Peculiar Pair of Galaxies",
+        "Website": "https://www.flickr.com/photos/nasahubble/51903957220/"
+    }
+}

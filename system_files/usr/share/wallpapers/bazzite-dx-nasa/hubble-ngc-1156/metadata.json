@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, R. B. Tully, R. Jansen, R. Windhorst"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-ngc-1156",
+        "License": "CC-BY-2.0",
+        "Name": "NGC 1156",
+        "Website": "https://www.flickr.com/photos/nasahubble/52701332973/"
+    }
+}

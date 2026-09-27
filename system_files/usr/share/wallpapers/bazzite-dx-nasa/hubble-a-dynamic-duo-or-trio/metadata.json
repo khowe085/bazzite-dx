@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, J. Dalcanton, Dark Energy Survey/DOE/FNAL/NOIRLab/NSF/AURA"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-a-dynamic-duo-or-trio",
+        "License": "CC-BY-2.0",
+        "Name": "A Dynamic Duo … or Trio?",
+        "Website": "https://www.flickr.com/photos/nasahubble/53435079630/"
+    }
+}

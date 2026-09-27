@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Jesse Allen, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-the-birthplace-of-the-united-states",
+        "License": "public-domain",
+        "Name": "The Birthplace of the United States",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/the-birthplace-of-the-united-states-90513/"
+    }
+}

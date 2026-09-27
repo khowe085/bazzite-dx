@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-sees-the-eye-of-a-colorful-galaxy",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Sees the Eye of a Colorful Galaxy",
+        "Website": "https://www.flickr.com/photos/nasahubble/51952615855/"
+    }
+}

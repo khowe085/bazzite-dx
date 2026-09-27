@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-olympic-mountain-glory",
+        "License": "public-domain",
+        "Name": "Olympic Mountain Glory",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/olympic-mountain-glory/"
+    }
+}

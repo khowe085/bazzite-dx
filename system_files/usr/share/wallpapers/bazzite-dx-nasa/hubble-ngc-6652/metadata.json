@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, A. Sarajedini, G. Piotto"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-ngc-6652",
+        "License": "CC-BY-2.0",
+        "Name": "NGC 6652",
+        "Website": "https://www.flickr.com/photos/nasahubble/53437045997/"
+    }
+}

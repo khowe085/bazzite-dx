@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-a-changing-world-for-emperor-penguins",
+        "License": "public-domain",
+        "Name": "A Changing World for Emperor Penguins",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/a-changing-world-for-emperor-penguins/"
+    }
+}

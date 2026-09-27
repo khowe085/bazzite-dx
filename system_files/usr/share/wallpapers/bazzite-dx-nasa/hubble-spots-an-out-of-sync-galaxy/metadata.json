@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-spots-an-out-of-sync-galaxy",
+        "License": "CC0-1.0",
+        "Name": "NASA’s Hubble Spots an Out-of-Sync Galaxy",
+        "Website": "https://www.flickr.com/photos/nasahubble/55534741297/"
+    }
+}

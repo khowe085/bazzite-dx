@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, C. Kilpatrick"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-sighting-forbidden-light",
+        "License": "CC-BY-2.0",
+        "Name": "Sighting Forbidden Light",
+        "Website": "https://www.flickr.com/photos/nasahubble/53434485720/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-a-bare-summer-for-barnes-ice-cap",
+        "License": "public-domain",
+        "Name": "A Bare Summer for Barnes Ice Cap",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/a-bare-summer-for-barnes-ice-cap/"
+    }
+}
