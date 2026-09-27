@@ -93,7 +93,7 @@ HOSTROOT="$tmp/host"
 BOXROOT="$tmp/box"
 DROPIN=etc/ssh/ssh_config.d/60-1password-agent.conf
 # The host as this image makes it: 1Password under /usr/lib/opt, the system Git settings of
-# 25-1password-git-signing.sh and the SSH agent drop-in from system_files. The box starts empty.
+# 25-1password-git-signing.sh and 82-gh-git-credential.sh, and the SSH agent drop-in from system_files. The box starts empty.
 reset() {
 	rm -rf "$tmp/keyrings" "$tmp/sources" "$HOSTROOT" "$BOXROOT"
 	mkdir -p "$tmp/sources" "$HOSTROOT/usr/lib/opt/1Password" "$HOSTROOT/etc/ssh/ssh_config.d" "$BOXROOT"
@@ -106,12 +106,17 @@ reset() {
 	git config --file "$HOSTROOT/etc/gitconfig" gpg.format ssh
 	git config --file "$HOSTROOT/etc/gitconfig" gpg.ssh.program /opt/1Password/op-ssh-sign
 	git config --file "$HOSTROOT/etc/gitconfig" commit.gpgsign true
+	GIT_CONFIG_SYSTEM="$HOSTROOT/etc/gitconfig" bash "$SRC/build_files/82-gh-git-credential.sh" 2>/dev/null
 	cp "$SRC/system_files/$DROPIN" "$HOSTROOT/$DROPIN"
 	: >"$tmp/calls.log"
 }
 boxgit() { git config --file "$BOXROOT/etc/gitconfig" "$@"; }
+box_helpers() { boxgit --get-all "credential.$1.helper" | paste -sd'|'; }
+GH_HELPERS='|!/usr/bin/gh auth git-credential'
 check_host_tools() {
 	check "gh in the box is the host's, where Git's credential helper looks for it" test "$(readlink "$BOXROOT/usr/bin/gh")" = "$HOSTROOT/usr/bin/gh"
+	check "Git in the box asks gh alone for github.com, as on the host" test "$(box_helpers https://github.com)" = "$GH_HELPERS"
+	check "and for gist.github.com" test "$(box_helpers https://gist.github.com)" = "$GH_HELPERS"
 	check "tea in the box is the host's" test "$(readlink "$BOXROOT/usr/bin/tea")" = "$HOSTROOT/usr/bin/tea"
 }
 check_signing() {
@@ -167,6 +172,7 @@ boxgit user.name "Box Only"
 check "init exits 0" run_init DPKG_INSTALLED=1
 check_signing
 check "each Git setting is there once" test "$(boxgit --get-all gpg.ssh.program | wc -l)" = 1
+check "the credential helpers are not added again" test "$(box_helpers https://github.com)" = "$GH_HELPERS"
 check "the box's own Git settings are kept" test "$(boxgit --get user.name)" = "Box Only"
 
 echo "== the box's Git config holds a key twice (git config --system --add in the box)"
@@ -183,6 +189,10 @@ git config --file "$HOSTROOT/etc/gitconfig" --unset commit.gpgsign
 check "init exits 0" run_init DPKG_INSTALLED=1
 check "the box drops it too" bash -c "! git config --file '$BOXROOT/etc/gitconfig' --get commit.gpgsign"
 check "and keeps the others" test "$(boxgit --get gpg.format)" = ssh
+git config --file "$HOSTROOT/etc/gitconfig" --unset-all credential.https://gist.github.com.helper
+check "init exits 0" run_init DPKG_INSTALLED=1
+check "a credential helper list the host drops goes too" test -z "$(box_helpers https://gist.github.com)"
+check "and the other stays" test "$(box_helpers https://github.com)" = "$GH_HELPERS"
 
 echo "== the box's Git config cannot be written (a stale lock)"
 reset

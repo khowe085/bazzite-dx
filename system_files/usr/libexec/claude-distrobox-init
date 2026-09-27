@@ -9,9 +9,9 @@ HOST="${CLAUDE_HOST_ROOT:-/run/host}"
 BOX="${CLAUDE_BOX_ROOT:-}"
 
 # SSH and Git signing through 1Password, as on the host (25-1password-git-signing.sh and
-# 60-1password-agent.conf). The home directory is shared, so the agent socket and the user's own
-# ~/.gitconfig (user.signingkey) are already here; the box lacks the host's system files and the
-# signer. Done on every start, before the early exit below, so that image updates reach existing boxes
+# 60-1password-agent.conf), and gh as Git's credential helper for GitHub (82-gh-git-credential.sh).
+# The home directory is shared, so the agent socket and the user's own ~/.gitconfig (user.signingkey)
+# are already here; the box lacks the host's system files and the signer. Done on every start, before the early exit below, so that image updates reach existing boxes
 # and it works offline. Distrobox does not start the box when this hook fails, so each step only warns.
 warn() { echo "claude-distrobox-init: $*" >&2; }
 # The host's /opt/1Password leads through an absolute link (/var/opt/1Password -> /usr/lib/opt/1Password)
@@ -33,6 +33,15 @@ if [[ -f "$HOST/etc/gitconfig" ]] && command -v git >/dev/null; then
 			git config --file "$BOX/etc/gitconfig" --unset-all "$key" 2>/dev/null || (($? == 5)) ||
 				warn "could not unset $key"
 		fi
+	done
+	# gh as Git's credential helper (82-gh-git-credential.sh): lists of values, the first one empty,
+	# copied in order as a whole.
+	for key in credential.https://github.com.helper credential.https://gist.github.com.helper; do
+		git config --file "$BOX/etc/gitconfig" --unset-all "$key" 2>/dev/null || (($? == 5)) ||
+			{ warn "could not unset $key"; continue; }
+		while IFS= read -r -d '' value; do
+			git config --file "$BOX/etc/gitconfig" --add "$key" "$value" || warn "could not set $key"
+		done < <(git config --file "$HOST/etc/gitconfig" --get-all -z "$key")
 	done
 fi
 if [[ -f "$HOST/etc/ssh/ssh_config.d/60-1password-agent.conf" ]]; then

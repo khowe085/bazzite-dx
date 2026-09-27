@@ -53,6 +53,9 @@ check "op-ssh-sign ships with 1Password" test -x "$OP/op-ssh-sign"
 check "system git config signs with SSH" test "$(git config --system gpg.format)" = ssh
 check "system git config uses 1Password's signer" test "$(git config --system gpg.ssh.program)" = /opt/1Password/op-ssh-sign
 check "system git config signs commits by default" test "$(git config --system --type=bool commit.gpgsign)" = true
+for host in https://github.com https://gist.github.com; do
+	check "system git config lets gh alone answer for $host" test "$(git config --system --get-all "credential.$host.helper" | paste -sd'|')" = '|!/usr/bin/gh auth git-credential'
+done
 SSH_DROPIN=/etc/ssh/ssh_config.d/60-1password-agent.conf
 check "ssh agent drop-in is root:root 644" test "$(mode_of "$SSH_DROPIN")" = "644 root:root"
 check "drop-in points at 1Password's agent socket" grep -Eqx '[[:space:]]*IdentityAgent ~/\.1password/agent\.sock' "$SSH_DROPIN"
