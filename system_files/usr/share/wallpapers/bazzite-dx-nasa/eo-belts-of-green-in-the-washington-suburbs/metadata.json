@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-belts-of-green-in-the-washington-suburbs",
+        "License": "public-domain",
+        "Name": "Belts of Green in the Washington Suburbs",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/belts-of-green-in-the-washington-suburbs/"
+    }
+}

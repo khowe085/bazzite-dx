@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory image by Jesse Allen, using Landsat data provided by the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-star-spangled-city",
+        "License": "public-domain",
+        "Name": "Star-Spangled City",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/star-spangled-city-84346/"
+    }
+}

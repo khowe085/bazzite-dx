@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, D. Thilker (The Johns Hopkins University); Image Processing: Gladys Kober (NASA/Catholic University of America)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-messier-58",
+        "License": "CC0-1.0",
+        "Name": "Messier 58",
+        "Website": "https://www.flickr.com/photos/nasahubble/55156499276/"
+    }
+}

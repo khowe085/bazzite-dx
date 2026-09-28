@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-peers-at-celestial-cloudscape",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Peers at Celestial Cloudscape",
+        "Website": "https://www.flickr.com/photos/nasahubble/52281061124/"
+    }
+}

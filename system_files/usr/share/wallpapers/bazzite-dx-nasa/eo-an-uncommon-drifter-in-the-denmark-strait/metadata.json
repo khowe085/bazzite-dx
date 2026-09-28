@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-an-uncommon-drifter-in-the-denmark-strait",
+        "License": "public-domain",
+        "Name": "An Uncommon Drifter in the Denmark Strait",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/an-uncommon-drifter-in-the-denmark-strait/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, Kevin Luhman (PSU), Catarina Alves de Oliveira (ESA), Mahdi Zamani (ESA/Webb)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-reveals-dynamic-panorama-of-star-formation",
+        "License": "CC-BY-4.0",
+        "Name": "NASA’s Webb Reveals Dynamic Panorama of Star Formation",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55530498785/"
+    }
+}

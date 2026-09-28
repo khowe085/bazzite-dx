@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI, D. Milisavljevic (Purdue University), T. Temim (Princeton University), I. De Looze (Ghent University)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-stuns-with-new-high-definition-look-at-exploded",
+        "License": "CC-BY-2.0",
+        "Name": "NASA's Webb Stuns With New High-Definition Look at Exploded Star",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/53389652123/"
+    }
+}

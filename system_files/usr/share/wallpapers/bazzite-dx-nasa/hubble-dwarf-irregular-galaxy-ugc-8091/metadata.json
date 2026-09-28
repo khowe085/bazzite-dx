@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble, NASA, ESA, Yumi Choi (NSF's NOIRLab), Karoline Gilbert (STScI), Julianne Dalcanton (Center for Computational Astrophysics/Flatiron Inst., UWashington)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-dwarf-irregular-galaxy-ugc-8091",
+        "License": "CC-BY-2.0",
+        "Name": "Dwarf Irregular Galaxy UGC 8091",
+        "Website": "https://www.flickr.com/photos/nasahubble/53433121032/"
+    }
+}

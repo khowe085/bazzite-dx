@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, and A. Dotter (Dartmouth College); Processing: Gladys Kober (NASA/Catholic University of America)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-spies-stellar-sparkler-for-july-4th",
+        "License": "CC0-1.0",
+        "Name": "NASA’s Hubble Spies Stellar Sparkler for July 4th",
+        "Website": "https://www.flickr.com/photos/nasahubble/55380680102/"
+    }
+}

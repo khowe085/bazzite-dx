@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, P. Zeidler, E. Sabbi, A. Nota, M. Zamani (ESA/Webb)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-finds-candidates-for-first-young-brown-dwarfs",
+        "License": "CC-BY-2.0",
+        "Name": "Webb finds candidates for first young brown dwarfs outside the Milky Way",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54088897300/"
+    }
+}

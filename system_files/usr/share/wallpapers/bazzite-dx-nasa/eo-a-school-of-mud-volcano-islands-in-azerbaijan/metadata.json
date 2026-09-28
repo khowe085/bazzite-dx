@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-a-school-of-mud-volcano-islands-in-azerbaijan",
+        "License": "public-domain",
+        "Name": "A School of Mud Volcano Islands in Azerbaijan",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/a-school-of-mud-volcano-islands-in-azerbaijan/"
+    }
+}

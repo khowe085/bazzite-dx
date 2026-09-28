@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, M. Villenave et al."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-dusty-wisps-round-a-dusty-disc",
+        "License": "CC-BY-4.0",
+        "Name": "Dusty wisps round a dusty disc",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54752579005/"
+    }
+}

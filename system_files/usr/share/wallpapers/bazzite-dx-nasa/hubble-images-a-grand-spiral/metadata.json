@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, A. Riess, D. Thilker, D. De Martin (ESA/Hubble), M. Zamani (ESA/Hubble)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-images-a-grand-spiral",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Images a Grand Spiral",
+        "Website": "https://www.flickr.com/photos/nasahubble/54202259495/"
+    }
+}

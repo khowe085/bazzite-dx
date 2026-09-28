@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, STScI; Image Processing: Joseph DePasquale (STScI)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-dazzles-with-young-stars-in-trifid-nebula",
+        "License": "CC0-1.0",
+        "Name": "NASA’s Hubble Dazzles With Young Stars in Trifid Nebula",
+        "Website": "https://www.flickr.com/photos/nasahubble/55219878599/"
+    }
+}

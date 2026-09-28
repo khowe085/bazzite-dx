@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, and STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-carina-nebula-high-resolution",
+        "License": "CC-BY-2.0",
+        "Name": "Carina Nebula (High resolution)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/52259221868/"
+    }
+}

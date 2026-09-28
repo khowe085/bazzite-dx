@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-nebula-ngc-1333",
+        "License": "CC-BY-2.0",
+        "Name": "Nebula NGC 1333",
+        "Website": "https://www.flickr.com/photos/nasahubble/53435005365/"
+    }
+}

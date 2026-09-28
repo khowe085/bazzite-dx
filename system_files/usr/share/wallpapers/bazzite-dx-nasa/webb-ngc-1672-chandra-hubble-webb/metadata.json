@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "X-ray: NASA/CXC/SAO; Optical: NASA/ESA/STScI/Hubble Heritage Team; Infrared: NASA/ESA/CSA/STScI/J. Lee and T. Williams; Image Processing: NASA/CXC/SAO/L. Frattare, J. Major, K. Arcand"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-ngc-1672-chandra-hubble-webb",
+        "License": "CC-BY-4.0",
+        "Name": "NGC 1672 (Chandra + Hubble + Webb)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55487694066/"
+    }
+}

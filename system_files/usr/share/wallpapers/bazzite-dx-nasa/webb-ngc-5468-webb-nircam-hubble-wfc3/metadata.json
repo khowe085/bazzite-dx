@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-ngc-5468-webb-nircam-hubble-wfc3",
+        "License": "CC-BY-2.0",
+        "Name": "NGC 5468 (Webb NIRCam + Hubble WFC3)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/53583501699/"
+    }
+}

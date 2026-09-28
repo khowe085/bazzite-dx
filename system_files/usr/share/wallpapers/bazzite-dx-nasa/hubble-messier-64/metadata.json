@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, CSA, ESA, F. Belfiore (European Southern Observatory – Germany), J. Lee (Space Telescope Science Institute), A. Leroy (The Ohio State University), and D. Thilker (The Johns Hopkins University); Processing: Gladys Kober (NASA/Catholic University of America)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-messier-64",
+        "License": "CC0-1.0",
+        "Name": "Messier 64",
+        "Website": "https://www.flickr.com/photos/nasahubble/55157323192/"
+    }
+}

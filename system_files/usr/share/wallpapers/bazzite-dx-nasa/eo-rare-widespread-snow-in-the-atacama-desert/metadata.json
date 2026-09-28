@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey and MODIS data from NASA EOSDIS LANCE and GIBS/Worldview."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-rare-widespread-snow-in-the-atacama-desert",
+        "License": "public-domain",
+        "Name": "Rare, Widespread Snow in the Atacama Desert",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/rare-widespread-snow-in-the-atacama-desert/"
+    }
+}

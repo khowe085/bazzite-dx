@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, J. H. Kastner (Rochester Institute of Technology)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-the-red-spider-nebula-caught-by-webb",
+        "License": "CC-BY-4.0",
+        "Name": "The Red Spider Nebula, caught by Webb",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54923443801/"
+    }
+}

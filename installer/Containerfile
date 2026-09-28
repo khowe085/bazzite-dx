@@ -15,3 +15,9 @@ RUN --mount=type=bind,source=./.,target=/src \
     INSTALL_IMAGE_PAYLOAD="$INSTALL_IMAGE_PAYLOAD" \
     FLATPAK_DIR_SHORTNAME="$FLATPAK_DIR_SHORTNAME" \
     /src/build.sh
+
+# Not from Bazzite: this image's own flatpaks, from its system_files/ (the workflow passes them as the
+# image-files build context). See install-image-flatpaks.sh.
+RUN --mount=type=bind,source=./.,target=/src \
+    --mount=type=bind,from=image-files,target=/image-files \
+    IMAGE_FILES=/image-files /src/install-image-flatpaks.sh

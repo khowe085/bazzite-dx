@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "X-ray: NASA/CXC/SAO; Optical:NASA/Hubble Heritage Team/AURA/STScI; Infrared: NASA/ESA/CSA/STScI; Image Processing: NASA/CXC/SAO/L. Frattare"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-m104-sombrero-galaxy-chandra-hubble-webb",
+        "License": "CC-BY-4.0",
+        "Name": "M104/Sombrero Galaxy (Chandra + Hubble + Webb)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55486909177/"
+    }
+}

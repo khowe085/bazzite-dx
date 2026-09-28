@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency (ESA)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-views-a-turbulent-stellar-nursery",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Views a Turbulent Stellar Nursery",
+        "Website": "https://www.flickr.com/photos/nasahubble/52443498306/"
+    }
+}

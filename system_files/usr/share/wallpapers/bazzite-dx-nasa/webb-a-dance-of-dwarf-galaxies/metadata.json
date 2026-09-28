@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, A. Adamo (Stockholm University), G. Bortolini, and the FEAST JWST team"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-a-dance-of-dwarf-galaxies",
+        "License": "CC-BY-4.0",
+        "Name": "A dance of dwarf galaxies",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54960149350/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "X-ray: NASA/CXC/SAO; Optical: NASA/ESA/STScI; Infrared: NASA/ESA/CSA/STScI; Image Processing: NASA/CXC/SAO/L. Frattare, J. Major, and K. Arcand"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-m82-chandra-nustar-hubble-spitzer-webb",
+        "License": "CC-BY-4.0",
+        "Name": "M82 (Chandra + NuSTAR + Hubble + Spitzer + Webb)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/55488046243/"
+    }
+}

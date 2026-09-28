@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, R. Tully"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-galaxy-in-a-ghostly-haze",
+        "License": "CC-BY-2.0",
+        "Name": "Galaxy in a Ghostly Haze",
+        "Website": "https://www.flickr.com/photos/nasahubble/53437034597/"
+    }
+}

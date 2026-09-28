@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-world-cup-fever-in-guadalajara",
+        "License": "public-domain",
+        "Name": "World Cup Fever in Guadalajara",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/world-cup-fever-in-guadalajara/"
+    }
+}

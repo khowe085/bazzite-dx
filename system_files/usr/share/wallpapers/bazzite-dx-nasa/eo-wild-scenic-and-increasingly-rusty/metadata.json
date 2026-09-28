@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using stream location data from O'Donnell, J.A., et al., and Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-wild-scenic-and-increasingly-rusty",
+        "License": "public-domain",
+        "Name": "Wild, Scenic, and Increasingly Rusty",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/wild-scenic-and-increasingly-rusty/"
+    }
+}

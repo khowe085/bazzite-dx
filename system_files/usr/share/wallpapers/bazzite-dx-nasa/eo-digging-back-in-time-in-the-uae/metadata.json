@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-digging-back-in-time-in-the-uae",
+        "License": "public-domain",
+        "Name": "Digging Back in Time in the UAE",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/digging-back-in-time-in-the-uae/"
+    }
+}

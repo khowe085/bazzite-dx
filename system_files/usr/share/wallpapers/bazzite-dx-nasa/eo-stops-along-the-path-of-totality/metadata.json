@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images and map by Michala Garrison, using Landsat data from the U.S. Geological Survey, base imagery from Blue Marble: Next Generation and Black Marble, and eclipse path data from Xavier Jubier."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-stops-along-the-path-of-totality",
+        "License": "public-domain",
+        "Name": "Stops Along the Path of Totality",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/stops-along-the-path-of-totality/"
+    }
+}

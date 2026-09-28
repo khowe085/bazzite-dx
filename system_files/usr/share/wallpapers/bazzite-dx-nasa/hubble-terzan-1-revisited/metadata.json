@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, R. Cohen"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-terzan-1-revisited",
+        "License": "CC-BY-2.0",
+        "Name": "Terzan 1 Revisited",
+        "Website": "https://www.flickr.com/photos/nasahubble/52440382783/"
+    }
+}

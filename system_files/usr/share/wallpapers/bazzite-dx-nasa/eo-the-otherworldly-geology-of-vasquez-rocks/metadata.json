@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Michala Garrison, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-the-otherworldly-geology-of-vasquez-rocks",
+        "License": "public-domain",
+        "Name": "The Otherworldly Geology of Vasquez Rocks",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/the-otherworldly-geology-of-vasquez-rocks/"
+    }
+}

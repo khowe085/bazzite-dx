@@ -13,6 +13,14 @@ ARG EDEN_VARIANT=amd64-clang-pgo
 ## build.sh lays down system_files/ and runs build_files/NN-*.sh in order; the last step
 ## (90-verify.sh) fails the build if anything expected is missing.
 
+# The EmuDeck and Crunchyroll AppImages, in a step of their own: it is the only one that gets
+# GITHUB_TOKEN (an optional build secret the workflow passes, which can push packages), for GitHub
+# release lookups that runners otherwise share a 60-an-hour limit for.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=tmpfs,dst=/tmp \
+    bash /ctx/fetch-appimages.sh
+
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \

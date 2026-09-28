@@ -64,12 +64,16 @@ jobs:
             echo "::error::installer/ only finds an image whose name starts with bazzite, not ${IMAGE_NAME}"
             exit 1
           fi
+          # image-files: the flatpaks in the image's preinstall.d go onto the ISO as well, read from
+          # this checkout, so run the workflow from the ref the tag was built from. Any the ISO lacks,
+          # the installed image adds at a boot with network.
           sudo env TMPDIR=/mnt/podman-storage/tmp podman build \
             --cap-add sys_admin \
             --security-opt label=disable \
             --build-arg BASE_IMAGE="${LIVE_IMAGE}" \
             --build-arg INSTALL_IMAGE_PAYLOAD="${IMAGE_REGISTRY,,}/${IMAGE_NAME,,}:${TAG}" \
             --build-arg FLATPAK_DIR_SHORTNAME=kde_flatpaks \
+            --build-context image-files=system_files \
             -t localhost/payload:latest installer/
 
       # Bazzite's ISO workflow uses this branch of titanoboa, ublue's live ISO builder, pinned here.

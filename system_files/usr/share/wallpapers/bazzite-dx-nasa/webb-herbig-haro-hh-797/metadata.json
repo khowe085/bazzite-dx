@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Webb, NASA & CSA, T. Ray (Dublin Institute for Advanced Studies)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-herbig-haro-hh-797",
+        "License": "CC-BY-2.0",
+        "Name": "Herbig-Haro (HH) 797",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/53361000972/"
+    }
+}

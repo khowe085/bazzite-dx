@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-boom-year-for-desert-blooms",
+        "License": "public-domain",
+        "Name": "Boom Year for Desert Blooms",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/boom-year-for-desert-blooms/"
+    }
+}

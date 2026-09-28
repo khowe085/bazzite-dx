@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI, Adam Ginsburg (University of Florida), Nazar Budaiev (University of Florida), Taehwa Yoo (University of Florida); Image Processing: Alyssa Pagan (STScI)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-explores-largest-star-forming-cloud-in-milky-way",
+        "License": "CC-BY-4.0",
+        "Name": "NASA’s Webb Explores Largest Star-Forming Cloud in Milky Way (NIRCam image)",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54808358047/"
+    }
+}

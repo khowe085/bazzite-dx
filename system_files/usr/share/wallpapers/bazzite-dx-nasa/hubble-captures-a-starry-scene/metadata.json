@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-captures-a-starry-scene",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Captures a Starry Scene",
+        "Website": "https://www.flickr.com/photos/nasahubble/52377486842/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI, Jose M. Diego (IFCA), Jordan C. J. D'Silva (UWA), Anton M. Koekemoer (STScI), Jake Summers (ASU), Rogier Windhorst (ASU), Haojing Yan (University of Missouri)"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-webb-hubble-combine-to-create-most-colorful-view",
+        "License": "CC-BY-2.0",
+        "Name": "NASA’s Webb, Hubble Combine to Create Most Colorful View of Universe",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/53320910661/"
+    }
+}

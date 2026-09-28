@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA, ESA, CSA, STScI"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.webb-glittering-glimpse-of-star-birth-from-nasa-s-webb",
+        "License": "CC-BY-4.0",
+        "Name": "Glittering Glimpse of Star Birth From NASA's Webb Telescope",
+        "Website": "https://www.flickr.com/photos/nasawebbtelescope/54764951141/"
+    }
+}

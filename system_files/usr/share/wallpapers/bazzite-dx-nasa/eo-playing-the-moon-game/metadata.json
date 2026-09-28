@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-playing-the-moon-game",
+        "License": "public-domain",
+        "Name": "Playing the Moon Game",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/playing-the-moon-game/"
+    }
+}

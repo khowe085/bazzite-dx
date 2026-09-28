@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-fans-of-the-arctic",
+        "License": "public-domain",
+        "Name": "Fans of the Arctic",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/fans-of-the-arctic/"
+    }
+}

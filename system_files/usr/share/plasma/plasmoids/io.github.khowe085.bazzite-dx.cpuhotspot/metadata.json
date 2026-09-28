@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Category": "System Information",
+        "Description": "System monitor widget that shows the hottest CPU temperature",
+        "EnabledByDefault": true,
+        "FormFactors": ["desktop"],
+        "Icon": "temperature-normal",
+        "Id": "io.github.khowe085.bazzite-dx.cpuhotspot",
+        "License": "GPL-2.0+",
+        "Name": "CPU Hotspot"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": ["org.kde.plasma.systemmonitor"],
+    "X-Plasma-RootPath": "org.kde.plasma.systemmonitor"
+}

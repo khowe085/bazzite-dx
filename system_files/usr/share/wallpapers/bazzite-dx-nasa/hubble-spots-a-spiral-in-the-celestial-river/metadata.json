@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-spots-a-spiral-in-the-celestial-river",
+        "License": "CC-BY-2.0",
+        "Name": "Hubble Spots a Spiral in the Celestial River",
+        "Website": "https://www.flickr.com/photos/nasahubble/54187367935/"
+    }
+}

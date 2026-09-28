@@ -22,6 +22,7 @@ POLICY=/usr/share/polkit-1/actions/com.1password.1Password.policy
 HOOK=/usr/share/ublue-os/user-setup.hooks.d/30-emudeck.sh
 FF_SETUP=/usr/libexec/onepassword-firefox-flatpak-setup
 FF_PREF=/usr/share/ublue-os/firefox-config/zz-onepassword-native-messaging.js
+JUST_DIR=/usr/share/ublue-os/just
 
 echo "== .NET 10 SDK"
 check "dotnet-sdk-10.0 package installed" rpm -q dotnet-sdk-10.0
@@ -52,6 +53,9 @@ check "op-ssh-sign ships with 1Password" test -x "$OP/op-ssh-sign"
 check "system git config signs with SSH" test "$(git config --system gpg.format)" = ssh
 check "system git config uses 1Password's signer" test "$(git config --system gpg.ssh.program)" = /opt/1Password/op-ssh-sign
 check "system git config signs commits by default" test "$(git config --system --type=bool commit.gpgsign)" = true
+for host in https://github.com https://gist.github.com; do
+	check "system git config lets gh alone answer for $host" test "$(git config --system --get-all "credential.$host.helper" | paste -sd'|')" = '|!/usr/bin/gh auth git-credential'
+done
 SSH_DROPIN=/etc/ssh/ssh_config.d/60-1password-agent.conf
 check "ssh agent drop-in is root:root 644" test "$(mode_of "$SSH_DROPIN")" = "644 root:root"
 check "drop-in points at 1Password's agent socket" grep -Eqx '[[:space:]]*IdentityAgent ~/\.1password/agent\.sock' "$SSH_DROPIN"
@@ -74,6 +78,25 @@ check "Eden AppImage shipped" test -x /usr/lib/eden/Eden.AppImage
 check "Eden AppImage has the AppImage type-2 magic" bash -c 'test "$(dd if=/usr/lib/eden/Eden.AppImage bs=1 skip=8 count=3 2>/dev/null | od -An -c | tr -d " ")" = "AI002"'
 check "Eden version stamp recorded" test -s /usr/lib/eden/VERSION
 
+echo "== EmuDeck and Crunchyroll AppImages"
+APPIMAGE_TOOL=/usr/libexec/image-appimage
+for app in emudeck/EmuDeck crunchyroll/Crunchyroll; do
+	check "${app#*/} AppImage shipped" test -x "/usr/lib/${app}.AppImage"
+	check "${app#*/} AppImage has the AppImage type-2 magic" bash -c "test \"\$(dd if=/usr/lib/${app}.AppImage bs=1 skip=8 count=3 2>/dev/null | od -An -c | tr -d ' ')\" = AI002"
+	check "${app#*/} version stamp recorded" test -s "/usr/lib/${app%/*}/VERSION"
+done
+check "$APPIMAGE_TOOL is executable" test -x "$APPIMAGE_TOOL"
+check "$APPIMAGE_TOOL parses" bash -n "$APPIMAGE_TOOL"
+# The build step fetches from the projects ujust uses, so the Portal's status and toggles still fit.
+check "ujust get-emudeck still downloads from EmuDeck/emudeck-electron" grep -rqF 'https://api.github.com/repos/EmuDeck/emudeck-electron/releases/latest' "$JUST_DIR"
+check "the Portal still gets Crunchyroll from aarron-lee/crunchyroll-linux" grep -rqF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$JUST_DIR"
+# build_files/ is only there during the build (/ctx), not when this runs against a finished image.
+APPIMAGES_STEP="$(dirname "${BASH_SOURCE[0]}")/fetch-appimages.sh"
+if [[ -f "$APPIMAGES_STEP" ]]; then
+	check "the build step fetches EmuDeck from there" grep -qx 'ship EmuDeck/emudeck-electron emudeck EmuDeck.AppImage' "$APPIMAGES_STEP"
+	check "and Crunchyroll" grep -qx 'ship aarron-lee/crunchyroll-linux crunchyroll Crunchyroll.AppImage' "$APPIMAGES_STEP"
+fi
+
 echo "== EmuDeck first-login hook"
 check "hook is executable" test -x "$HOOK"
 check "hook parses" bash -n "$HOOK"
@@ -87,24 +110,40 @@ check "bazzite-flatpak-manager.service still exists in the base" test -f /usr/li
 echo "== KDE defaults"
 LNF=org.fedoraproject.fedoradark.desktop
 UPDATES_DIR=/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates
-POTD_SCRIPT="$UPDATES_DIR/picture-of-the-day-default.js"
+WALLPAPER_SCRIPT="$UPDATES_DIR/nasa-slideshow-default.js"
+SLIDES=/usr/share/wallpapers/bazzite-dx-nasa
 check "Fedora Dark is the default global theme" grep -qx "LookAndFeelPackage=$LNF" /etc/xdg/kdeglobals
 check "kdeglobals names one global theme only" test "$(grep -c '^LookAndFeelPackage=' /etc/xdg/kdeglobals)" = 1
 check "the base ships that theme" test -f "/usr/share/plasma/look-and-feel/$LNF/metadata.json"
 check "the rest of Bazzite's kdeglobals is still there" grep -qx 'kcm_updates=false' /etc/xdg/kdeglobals
 # With --type bool, kreadconfig6 exits 0 only for true, however false is spelled.
 check "X11 apps scale themselves, KDE's default rather than the Deck's" kreadconfig6 --file /etc/xdg/kdeglobals --group KScreen --key XwaylandClientsScale --type bool --default true
-check "wallpaper update script shipped" test -f "$POTD_SCRIPT"
-check "in the directory the base uses for its own Plasma update script" test -f "$UPDATES_DIR/bazzite-pins.js"
+check "wallpaper update script shipped" test -f "$WALLPAPER_SCRIPT"
+check "in the directory Plasma runs update scripts from" test -f "$UPDATES_DIR/unlock_widgets.js"
+check "Bazzite's update script no longer pins apps to the dock" test ! -e "$UPDATES_DIR/bazzite-pins.js"
 # Bazzite's Vapor theme writes its wallpaper into every profile it sets up; the script has to know
 # that exact value to tell it from a picture the user chose.
 VAPOR_WALLPAPER=/usr/share/wallpapers/convergence.jxl
 check "Bazzite's Vapor theme still gives new profiles that wallpaper" grep -Fq "writeConfig(\"Image\", \"$VAPOR_WALLPAPER\")" /usr/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/plasmoidsetupscripts/org.kde.plasma.folder.js
-check "and the script counts it as untouched" grep -Fq "\"$VAPOR_WALLPAPER\"" "$POTD_SCRIPT"
-check "the script selects the Picture of the Day wallpaper" grep -q 'wallpaperPlugin = "org.kde.potd"' "$POTD_SCRIPT"
-check "with the Astronomy (NASA) provider" grep -q 'writeConfig("Provider", "apod")' "$POTD_SCRIPT"
-check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.potd/metadata.json
-check "and that provider" test -f /usr/lib64/qt6/plugins/potd/plasma_potd_apodprovider.so
+check "and the script counts it as untouched" grep -Fq "\"$VAPOR_WALLPAPER\"" "$WALLPAPER_SCRIPT"
+check "the script selects the slideshow wallpaper" grep -q 'wallpaperPlugin = "org.kde.slideshow"' "$WALLPAPER_SCRIPT"
+check "over the pictures this image ships" grep -Fq "\"$SLIDES/\"" "$WALLPAPER_SCRIPT"
+check "changing once a day" grep -q 'writeConfig("SlideInterval", 86400)' "$WALLPAPER_SCRIPT"
+check "the base ships that wallpaper type" test -f /usr/share/plasma/wallpapers/org.kde.slideshow/metadata.json
+check "the script still counts Picture of the Day's NASA provider as untouched" grep -q '"apod"' "$WALLPAPER_SCRIPT"
+check "the old Picture of the Day script is gone" test ! -e "$UPDATES_DIR/picture-of-the-day-default.js"
+# Each picture is a Plasma wallpaper package: metadata.json and one image in contents/images named
+# WIDTHxHEIGHT, the name Plasma picks a package's image by.
+check "the slideshow has its pictures" test "$(find "$SLIDES" -mindepth 1 -maxdepth 1 -type d | wc -l)" -ge 100
+check "and their credits" test -s "$SLIDES/CREDITS.md"
+malformed_slides() {
+	local pkg
+	for pkg in "$SLIDES"/*/; do
+		[[ -s "$pkg/metadata.json" && "$(find "$pkg/contents/images" -type f -regextype posix-extended -regex '.*/[0-9]+x[0-9]+\.(jpg|png|jxl)' | wc -l)" == 1 ]] || echo "$pkg"
+	done
+}
+check "each is a wallpaper package with one image" test -z "$(malformed_slides)"
+check "the base can read JPEG XL pictures" test -f /usr/lib64/qt6/plugins/imageformats/kimg_jxl.so
 # Read back with KDE's own parser: KWin's Touchpad group covers touchpads, Pointer the other pointing devices.
 input_default() { kreadconfig6 --file /etc/xdg/kcminputrc --group Libinput --group Defaults --group "$1" --key "$2"; }
 for type in Touchpad Pointer Keyboard; do
@@ -124,6 +163,36 @@ for layout in /usr/share/plasma/layout-templates/*/contents/layout.js; do
 	template=${layout%/contents/layout.js}
 	check "the Add Panel template ${template##*/} makes a panel that does not float" bash -c "sed -n 2p '$layout' | grep -qx 'panel.floating = false'"
 done
+LNF_DIR="/usr/share/plasma/look-and-feel/$LNF"
+check "Fedora Dark gives new profiles the Plastik window decoration" test "$(kreadconfig6 --file "$LNF_DIR/contents/defaults" --group kwinrc --group org.kde.kdecoration2 --key theme)" = kwin4_decoration_qml_plastik
+check "through Aurorae" test "$(kreadconfig6 --file "$LNF_DIR/contents/defaults" --group kwinrc --group org.kde.kdecoration2 --key library)" = org.kde.kwin.aurorae
+check "the base ships Plastik" test -f /usr/share/kwin/decorations/kwin4_decoration_qml_plastik/metadata.json
+for template in io.github.khowe085.bazzite-dx.topBar io.github.khowe085.bazzite-dx.dock; do
+	check "Fedora Dark's layout makes the panel of $template" grep -qx "loadTemplate(\"$template\")" "$LNF_DIR/contents/layouts/org.kde.plasma.desktop-layout.js"
+	layout="/usr/share/plasma/layout-templates/$template/contents/layout.js"
+	# Plasma skips a widget it cannot find without a word; they come as QML packages or compiled plugins.
+	for widget in $(sed -n 's/.*addWidget("\([^"]*\)").*/\1/p' "$layout"); do
+		check "$template: the base has the widget $widget" bash -c "test -e /usr/share/plasma/plasmoids/$widget/metadata.json || test -e /usr/lib64/qt6/plugins/plasma/applets/$widget.so"
+	done
+done
+check "Bazzite's default panel is no longer in Fedora Dark's layout" bash -c "! grep -q 'org.kde.plasma.desktop.defaultPanel' '$LNF_DIR/contents/layouts/org.kde.plasma.desktop-layout.js'"
+check "the dock's launcher icon (framework) is in the base" test -f /usr/share/icons/hicolor/scalable/apps/framework.svg
+check "Konsole starts with its built-in profile: no default profile in kdeglobals" bash -c "! grep -q '^DefaultProfile=' /etc/xdg/kdeglobals"
+check "nor in konsolerc" bash -c "! grep -q '^DefaultProfile=' /etc/xdg/konsolerc"
+KONSOLE_SHORTCUTS=/etc/skel/.local/share/kxmlgui5/konsole/sessionui.rc
+check "new users get Ctrl+V to paste in Konsole" grep -Fq '<Action name="edit_paste" shortcut="Ctrl+V; Shift+Ins"/>' "$KONSOLE_SHORTCUTS"
+check "from a file older than Konsole's own, so Konsole's menus are used and the shortcut merged in" grep -qx '<gui name="session" version="1">' "$KONSOLE_SHORTCUTS"
+check "notification popups appear at the top centre" test "$(kreadconfig6 --file /etc/xdg/plasmanotifyrc --group Notifications --key PopupPosition)" = TopCenter
+check "low-priority notifications are kept in the history" test "$(kreadconfig6 --file /etc/xdg/plasmanotifyrc --group Notifications --key LowPriorityHistory)" = true
+
+echo "== System Monitor's Overview page"
+OVERVIEW=/usr/share/plasma-systemmonitor/overview.page
+page_key() { kreadconfig6 --file "$OVERVIEW" "${@:1:$#-1}" --key "${!#}"; }
+check "CPU temperature under CPU usage" test "$(page_key --group page --group row-0 --group column-0 --group section-1 face)" = Face-94212943519072
+check "the GPU still in the first column" test "$(page_key --group page --group row-0 --group column-0 --group section-3 face)" = Face-106123406501568
+check "the battery's charge rate where the disks were" test "$(page_key --group page --group row-1 --group column-0 --group section-0 face)" = Face-94304568396688
+check "for any battery" test "$(page_key --group Face-94304568396688 --group Sensors highPrioritySensorIds)" = '["power/.*/chargeRate"]'
+check "Plasma's translations kept" grep -q '^Title\[de\]=' "$OVERVIEW"
 
 echo "== Power management"
 POWER=/etc/xdg/powerdevilrc
@@ -175,7 +244,6 @@ check "every preinstall section is well-formed" bash -c "test \"\$(grep -c '^\['
 check "every preinstall section is followed by its Branch line" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -A1 '^\[' '$PREINSTALL' | grep -cEx 'Branch=(stable|beta)')\""
 
 echo "== Bazzite Portal selections: system"
-JUST_DIR=/usr/share/ublue-os/just
 check "cockpit.service enabled" systemctl is-enabled cockpit.service
 check "base still ships the container cockpit.service starts" test -f /usr/share/containers/systemd/cockpit-container.container
 # Cockpit is for the local machine only. firewalld accepts loopback traffic before it looks at any
@@ -243,8 +311,6 @@ for cask in jetbrains-toolbox-linux lm-studio-linux; do
 done
 check "brew-setup.service, which unpacks Homebrew, is enabled in the base" systemctl is-enabled brew-setup.service
 CRUNCHYROLL_HOOK=/usr/share/ublue-os/user-setup.hooks.d/45-crunchyroll.sh
-check "the Portal still gets Crunchyroll from the project the hook downloads from" grep -rqF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$JUST_DIR"
-check "and the hook asks the same place" grep -qF 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$CRUNCHYROLL_HOOK"
 for script in "$SNAP_SETUP" "$DEDUP_SETUP" "$TWEAKS_HOOK" "$CASKS_SETUP" "$CRUNCHYROLL_HOOK"; do
 	check "$script is executable" test -x "$script"
 	check "$script parses" bash -n "$script"

@@ -1,6 +1,7 @@
 #!/usr/bin/bash
-# Exercises system_files/usr/share/ublue-os/user-setup.hooks.d/45-crunchyroll.sh with a temp HOME
-# and a stub curl (fake GitHub release + fake AppImage bytes).
+# Exercises system_files/usr/share/ublue-os/user-setup.hooks.d/45-crunchyroll.sh with a temp HOME,
+# a fake image directory and the repository's image-appimage (tests/test-image-appimage.sh covers
+# the placement rules; this checks the hook's wiring and that it needs no network).
 # Run inside a container with the repo mounted at /src:
 #   podman run --rm -v "$PWD:/src:ro,Z" <image> /src/tests/test-crunchyroll-hook.sh
 set -uo pipefail
@@ -10,40 +11,14 @@ HOOK="$SRC/system_files/usr/share/ublue-os/user-setup.hooks.d/45-crunchyroll.sh"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/bin" "$tmp/home"
+mkdir -p "$tmp/bin" "$tmp/home" "$tmp/image"
 
-# Stub curl: release JSON for the GitHub API URL, fake bytes for the AppImage URL.
-# CURL_FAIL=1 fails every call; CURL_FAIL_DOWNLOAD=1 fails only the AppImage download after writing
-# a partial file, like a dropped connection; CURL_NO_ASSET=1 serves a release without an AppImage;
-# CURL_ARM_FIRST=1 lists an arm64 AppImage before the x86_64 one.
-cat >"$tmp/bin/curl" <<'EOF'
-#!/usr/bin/bash
-out=""; url=""
-while [[ $# -gt 0 ]]; do
-	case "$1" in
-	-o) out="$2"; shift ;;
-	http*) url="$1" ;;
-	esac
-	shift
+# Any network use is a failure: curl and wget are stubs that log and fail.
+for tool in curl wget; do
+	printf '#!/usr/bin/bash\necho "%s $*" >>"%s/net.log"\nexit 7\n' "$tool" "$tmp" >"$tmp/bin/$tool"
 done
-echo "$url" >>"$CURL_LOG"
-[[ -n "${CURL_FAIL:-}" ]] && exit 22
-zip='{"name":"crunchyroll_unpacked.zip","browser_download_url":"https://example.invalid/crunchyroll_unpacked.zip"}'
-x86='{"name":"Crunchyroll_v9.9.9_linux.AppImage","browser_download_url":"https://example.invalid/Crunchyroll_v9.9.9_linux.AppImage"}'
-arm='{"name":"Crunchyroll_v9.9.9_linux_arm64.AppImage","browser_download_url":"https://example.invalid/Crunchyroll_v9.9.9_linux_arm64.AppImage"}'
-if [[ "$url" == */releases/latest ]]; then
-	if [[ -n "${CURL_NO_ASSET:-}" ]]; then
-		echo "{\"tag_name\":\"v9.9.9\",\"assets\":[$zip]}"
-	elif [[ -n "${CURL_ARM_FIRST:-}" ]]; then
-		echo "{\"tag_name\":\"v9.9.9\",\"assets\":[$arm,$zip,$x86]}"
-	else
-		echo "{\"tag_name\":\"v9.9.9\",\"assets\":[$zip,$x86]}"
-	fi
-else
-	echo "PARTIAL" >"$out"
-	[[ -n "${CURL_FAIL_DOWNLOAD:-}" ]] && exit 22
-	# The "AppImage" is a script that only knows --appimage-extract, enough to exercise the icon path.
-	cat >"$out" <<'APP'
+chmod +x "$tmp/bin/"*
+cat >"$tmp/image/Crunchyroll.AppImage" <<'APP'
 #!/usr/bin/bash
 # fake AppImage: CRUNCHYROLL-BYTES
 if [[ "${1:-}" == "--appimage-extract" ]]; then
@@ -54,9 +29,8 @@ if [[ "${1:-}" == "--appimage-extract" ]]; then
 	esac
 fi
 APP
-fi
-EOF
-chmod +x "$tmp/bin/curl"
+chmod +x "$tmp/image/Crunchyroll.AppImage"
+echo v1.2.3 >"$tmp/image/VERSION"
 
 fails=0
 check() {
@@ -69,72 +43,42 @@ check() {
 		fails=$((fails + 1))
 	fi
 }
-run_hook() { # run_hook [VAR=value ...]
-	env HOME="$tmp/home" PATH="$tmp/bin:$PATH" CURL_LOG="$tmp/curl.log" "$@" bash "$HOOK"
-}
-hook_fails() { ! run_hook "$@"; }
-fresh_home() {
-	rm -rf "$tmp/home"
-	mkdir -p "$tmp/home"
-	: >"$tmp/curl.log"
+run_hook() {
+	env HOME="$tmp/home" PATH="$tmp/bin:$PATH" CRUNCHYROLL_IMAGE_DIR="$tmp/image" \
+		IMAGE_APPIMAGE="$SRC/system_files/usr/libexec/image-appimage" bash "$HOOK"
 }
 apps="$tmp/home/Applications"
 app="$apps/Crunchyroll.AppImage"
 desktop="$tmp/home/.local/share/applications/Crunchyroll.desktop"
-stamp="$apps/.crunchyroll.image-placed"
 
 echo "== first login"
-fresh_home
 check "hook exits 0" run_hook
-check "asks the project the Bazzite Portal downloads from" grep -qx 'https://api.github.com/repos/aarron-lee/crunchyroll-linux/releases/latest' "$tmp/curl.log"
-check "AppImage placed under the name the Portal gives it" test -x "$app"
-check "it has the downloaded bytes" grep -q 'CRUNCHYROLL-BYTES' "$app"
-check "desktop entry launches the AppImage" grep -qx "Exec=\"$app\" %U" "$desktop"
-check "desktop entry names the icon" grep -qx 'Icon=crunchyroll' "$desktop"
-check "icon extracted from the AppImage (through the .DirIcon symlink)" test "$(cat "$tmp/home/.local/share/icons/hicolor/256x256/apps/crunchyroll.png")" = PNG
-check "placement stamped" test -e "$stamp"
-check "one release lookup and one download" test "$(wc -l <"$tmp/curl.log")" = 2
+check "AppImage copied from the image to ~/Applications/Crunchyroll.AppImage" cmp -s "$tmp/image/Crunchyroll.AppImage" "$app"
+check "desktop entry launches it" grep -qx "Exec=\"$app\" %U" "$desktop"
+check "desktop entry keeps its name, comment and categories" bash -c "grep -qx 'Name=Crunchyroll' '$desktop' && grep -qx 'Comment=Anime streaming' '$desktop' && grep -qx 'Categories=AudioVideo;Video;' '$desktop'"
+check "icon named crunchyroll" test "$(cat "$tmp/home/.local/share/icons/hicolor/256x256/apps/crunchyroll.png")" = PNG
+check "stamped with the image version" test "$(sed -n 2p "$apps/.crunchyroll.image-version")" = v1.2.3
+check "nothing downloaded" test ! -e "$tmp/net.log"
 
-echo "== second login"
-check "hook exits 0" run_hook
-check "nothing downloaded again" test "$(wc -l <"$tmp/curl.log")" = 2
-
-echo "== moved out of ~/Applications (Gear Lever) or deleted"
-rm "$app" "$desktop"
-check "hook exits 0" run_hook
-check "it is placed once per user, not re-downloaded" test "$(wc -l <"$tmp/curl.log")" = 2
-check "desktop entry not recreated" test ! -e "$desktop"
-
-echo "== the user already has a Crunchyroll AppImage there (from the Portal)"
-fresh_home
+echo "== a Crunchyroll AppImage of the user's own (any capitalisation) is respected"
+rm -rf "$tmp/home"
 mkdir -p "$apps"
 echo MINE >"$apps/crunchyroll-linux.AppImage"
 check "hook exits 0" run_hook
-check "nothing is downloaded next to it" test ! -s "$tmp/curl.log"
-check "theirs is left alone" test "$(cat "$apps/crunchyroll-linux.AppImage")" = MINE
+check "nothing placed next to it" test ! -e "$app"
 
-echo "== release lists an arm64 AppImage before the x86_64 one"
-fresh_home
-check "hook exits 0" run_hook CURL_ARM_FIRST=1
-check "the x86_64 AppImage is the one downloaded" grep -qx 'https://example.invalid/Crunchyroll_v9.9.9_linux.AppImage' "$tmp/curl.log"
+echo "== downloaded by the earlier hook (file Crunchyroll.AppImage, stamp naming the release asset)"
+rm -rf "$tmp/home"
+mkdir -p "$apps"
+cp "$tmp/image/Crunchyroll.AppImage" "$app"
+echo "Crunchyroll_v1.1.6_linux.AppImage" >"$apps/.crunchyroll.image-placed"
+check "hook exits 0" run_hook
+check "taken over and replaced by the image's copy" cmp -s "$tmp/image/Crunchyroll.AppImage" "$app"
+check "stamped with the image version" test "$(sed -n 2p "$apps/.crunchyroll.image-version")" = v1.2.3
 
-echo "== release has no AppImage asset"
-fresh_home
-check "hook fails" hook_fails CURL_NO_ASSET=1
-check "nothing left behind" test ! -e "$app"
-check "not stamped, so the next login retries" test ! -e "$stamp"
-
-echo "== release lookup fails (no network yet)"
-fresh_home
-check "hook fails" hook_fails CURL_FAIL=1
-check "not stamped" test ! -e "$stamp"
-
-echo "== the download drops"
-fresh_home
-check "hook fails" hook_fails CURL_FAIL_DOWNLOAD=1
-check "no partial file left behind" bash -c "! compgen -G '$apps/*runchyroll*' >/dev/null"
-check "no desktop entry for a file that is not there" test ! -e "$desktop"
-check "not stamped" test ! -e "$stamp"
+echo "== the hook uses the image's paths by default"
+check "image directory /usr/lib/crunchyroll" grep -qF 'CRUNCHYROLL_IMAGE_DIR:-/usr/lib/crunchyroll}' "$HOOK"
+check "tool /usr/libexec/image-appimage" grep -qF 'IMAGE_APPIMAGE:-/usr/libexec/image-appimage}' "$HOOK"
 
 if ((fails > 0)); then
 	echo "$fails check(s) failed"

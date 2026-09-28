@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, J. Dalcanton, Dark Energy Survey/DOE/FNAL/NOIRLab/NSF/AURA, SDSS"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-a-peculiar-pair",
+        "License": "CC-BY-2.0",
+        "Name": "A Peculiar Pair",
+        "Website": "https://www.flickr.com/photos/nasahubble/53433765602/"
+    }
+}

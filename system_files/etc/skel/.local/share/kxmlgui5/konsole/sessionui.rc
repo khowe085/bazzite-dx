@@ -1,0 +1,15 @@
+<?xml version='1.0'?>
+<!DOCTYPE gui SYSTEM 'kpartgui.dtd'>
+<gui name="session" version="1">
+ <!--
+   Konsole's paste shortcut: Ctrl+V next to Shift+Ins, where Konsole's own is Ctrl+Shift+V.
+   Only the shortcut, and version 1 on purpose: the toolkit then takes Konsole's built-in menus and
+   toolbars (always newer), copies this shortcut into them and saves the result here, as it does for
+   a user's own shortcuts after a Konsole update. A copy of the whole file would pin today's menus.
+   The comment sits inside the root element because the version is read from the first "gui" and
+   "version" words in the file.
+ -->
+ <ActionProperties scheme="Default">
+  <Action name="edit_paste" shortcut="Ctrl+V; Shift+Ins"/>
+ </ActionProperties>
+</gui>

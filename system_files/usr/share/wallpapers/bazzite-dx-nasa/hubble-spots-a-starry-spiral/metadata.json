@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "European Space Agency"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-spots-a-starry-spiral",
+        "License": "CC0-1.0",
+        "Name": "Hubble Spots a Starry Spiral",
+        "Website": "https://www.flickr.com/photos/nasahubble/55242321291/"
+    }
+}

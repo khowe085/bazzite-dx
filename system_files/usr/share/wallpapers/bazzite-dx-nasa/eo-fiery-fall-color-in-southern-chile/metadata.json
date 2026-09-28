@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "NASA Earth Observatory images by Lauren Dauphin, using Landsat data from the U.S. Geological Survey."
+            }
+        ],
+        "Id": "bazzite-dx-nasa.eo-fiery-fall-color-in-southern-chile",
+        "License": "public-domain",
+        "Name": "Fiery Fall Color in Southern Chile",
+        "Website": "https://science.nasa.gov/earth/earth-observatory/fiery-fall-color-in-southern-chile/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, R. Sahai"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-festive-and-free-floating-freggs",
+        "License": "CC-BY-2.0",
+        "Name": "Festive and Free-Floating FrEGGs",
+        "Website": "https://www.flickr.com/photos/nasahubble/53434825453/"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ESA/Hubble & NASA, A. Riess et al"
+            }
+        ],
+        "Id": "bazzite-dx-nasa.hubble-ugc-9391",
+        "License": "CC-BY-2.0",
+        "Name": "UGC 9391",
+        "Website": "https://www.flickr.com/photos/nasahubble/52701258880/"
+    }
+}

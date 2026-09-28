@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/LayoutTemplate",
+    "KPlugin": {
+        "Description": "Full-width bar along the top: system monitors, pager, system tray, status widgets and clock",
+        "EnabledByDefault": true,
+        "Id": "io.github.khowe085.bazzite-dx.topBar",
+        "License": "Apache-2.0",
+        "Name": "bazzite-dx Top Bar"
+    },
+    "X-Plasma-ContainmentCategories": [
+        "panel"
+    ],
+    "X-Plasma-Shell": "plasmashell"
+}
