@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!--
+  Task Manager TMOG runs as root: its menu entry starts it with pkexec, which picks this action by the
+  program's path. pkexec clears the environment; allow_gui keeps DISPLAY and XAUTHORITY (not
+  WAYLAND_DISPLAY), so it opens through Xwayland. auth_admin, not auth_admin_keep: as root it can
+  start any program ("Run new task"), so each launch asks for an admin's password.
+-->
+<policyconfig>
+  <action id="io.github.khowe085.bazzite-dx.tmog-task-manager">
+    <description>Run Task Manager TMOG as root</description>
+    <message>Authentication is required to run Task Manager TMOG as root</message>
+    <icon_name>tmog-task-manager</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/tmog-task-manager</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>

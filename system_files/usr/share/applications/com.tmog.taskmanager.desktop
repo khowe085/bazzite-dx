@@ -1,0 +1,12 @@
+# Replaces the tarball's entry (build_files/75-tmog-task-manager.sh): it runs as root through pkexec,
+# and gets Ctrl+Shift+Esc from kglobalacceld, since as root it cannot reach the GlobalShortcuts portal
+# it would otherwise ask for that key through.
+[Desktop Entry]
+Type=Application
+Name=Task Manager TMOG
+Comment=Native system monitor and task manager
+Exec=pkexec /usr/bin/tmog-task-manager
+Icon=tmog-task-manager
+Terminal=false
+Categories=System;Monitor;
+X-KDE-Shortcuts=Ctrl+Shift+Esc
