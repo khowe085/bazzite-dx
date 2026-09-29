@@ -229,19 +229,14 @@ for app in md.obsidian.Obsidian com.spotify.Client com.obsproject.Studio com.dis
 	org.jellyfin.JellyfinDesktop org.mozilla.firefox; do
 	check "preinstall list has $app" grep -qx "\[Flatpak Preinstall $app\]" "$PREINSTALL"
 done
-check "Firefox comes from the beta branch" bash -c "grep -A1 -Fx '[Flatpak Preinstall org.mozilla.firefox]' '$PREINSTALL' | grep -qx 'Branch=beta'"
-
-BETA_REMOTE=/etc/flatpak/remotes.d/flathub-beta.flatpakrepo
-check "flathub-beta remote definition shipped" grep -qx 'Url=https://dl.flathub.org/beta-repo/' "$BETA_REMOTE"
-# Same trust anchor as the Flathub remote the base already ships, not a key of this repo's choosing.
-check "flathub-beta uses the Flathub signing key the base trusts" bash -c "k=\$(grep '^GPGKey=' '$BETA_REMOTE'); test -n \"\$k\" && test \"\$k\" = \"\$(grep '^GPGKey=' /etc/flatpak/remotes.d/flathub.flatpakrepo)\""
-check "preinstall unit adds the flathub-beta remote before installing" grep -qx "ExecStartPre=/usr/bin/flatpak remote-add --system --if-not-exists flathub-beta $BETA_REMOTE" /usr/lib/systemd/system/custom-flatpak-preinstall.service
+check "Firefox comes from the stable branch" bash -c "grep -A1 -Fx '[Flatpak Preinstall org.mozilla.firefox]' '$PREINSTALL' | grep -qx 'Branch=stable'"
+check "preinstall unit adds no remote of its own" bash -c "! grep -q 'remote-add' /usr/lib/systemd/system/custom-flatpak-preinstall.service"
 # flatpak silently skips a malformed drop-in ("Nothing to do."), so check the shape here: the group
 # prefix is the one libflatpak parses, every section header is well-formed, and the line right
 # after each header is the Branch line.
 check "libflatpak parses the 'Flatpak Preinstall' group prefix" bash -c 'cat /usr/lib64/libflatpak.so.* | grep -a -q "Flatpak Preinstall"'
 check "every preinstall section is well-formed" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -c '^\[Flatpak Preinstall [A-Za-z0-9._-]*\]\$' '$PREINSTALL')\""
-check "every preinstall section is followed by its Branch line" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -A1 '^\[' '$PREINSTALL' | grep -cEx 'Branch=(stable|beta)')\""
+check "every preinstall section is followed by its Branch line" bash -c "test \"\$(grep -c '^\[' '$PREINSTALL')\" = \"\$(grep -A1 '^\[' '$PREINSTALL' | grep -cx 'Branch=stable')\""
 
 echo "== Bazzite Portal selections: system"
 check "cockpit.service enabled" systemctl is-enabled cockpit.service

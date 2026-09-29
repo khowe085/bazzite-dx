@@ -13,15 +13,11 @@
 set -exo pipefail
 
 IMAGE_FILES=${IMAGE_FILES:?}
-BETA_REMOTE="$IMAGE_FILES/etc/flatpak/remotes.d/flathub-beta.flatpakrepo"
 # Where flatpak reads preinstall files; overridable only for tests.
 PREINSTALL_DIR="${PREINSTALL_DIR:-/usr/share/flatpak/preinstall.d}"
 
 # bwrap writes /proc/sys/user/max_user_namespaces, which is mounted read-only (as in build.sh).
 mount -o remount,rw /proc/sys
-
-# Firefox beta comes from Flathub's beta remote, added as the image's preinstall unit adds it.
-flatpak remote-add --system --if-not-exists flathub-beta "$BETA_REMOTE"
 
 shopt -s nullglob
 lists=("$IMAGE_FILES"/usr/share/flatpak/preinstall.d/*.preinstall)

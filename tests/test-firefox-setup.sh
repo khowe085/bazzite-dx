@@ -37,17 +37,16 @@ run_setup() {
 
 check "setup script exits 0" run_setup
 # The stub reports aarch64, so a hardcoded x86_64 path would fail these.
-for branch in stable beta; do
-	dir="$tmp/ext/org.mozilla.firefox.systemconfig/aarch64/$branch/defaults/pref"
-	check "$branch: 1Password pref file placed under the arch flatpak reports" cmp -s "$PREF" "$dir/zz-onepassword-native-messaging.js"
-	check "$branch: Bazzite's own pref files are carried along" test -f "$dir/01-bazzite-global.js"
-	check "$branch: pref files are 0644" test "$(stat -c %a "$dir/zz-onepassword-native-messaging.js")" = 644
-done
+dir="$tmp/ext/org.mozilla.firefox.systemconfig/aarch64/stable/defaults/pref"
+check "1Password pref file placed under the arch flatpak reports" cmp -s "$PREF" "$dir/zz-onepassword-native-messaging.js"
+check "Bazzite's own pref files are carried along" test -f "$dir/01-bazzite-global.js"
+check "pref files are 0644" test "$(stat -c %a "$dir/zz-onepassword-native-messaging.js")" = 644
+check "only the stable branch is filled" test "$(ls "$tmp/ext/org.mozilla.firefox.systemconfig/aarch64")" = stable
 check "shipped pref file enables the native-messaging proxy" grep -qx 'pref("widget.use-xdg-desktop-portal.native-messaging-proxy", 1);' "$PREF"
 check "Firefox flatpak is granted talk access to the proxy" grep -qx 'override --system --talk-name=org.freedesktop.NativeMessagingProxy org.mozilla.firefox' "$tmp/flatpak.log"
 
 check "second run exits 0 (idempotent)" run_setup
-check "second run still leaves one pref file per branch" test "$(find "$tmp/ext" -name 'zz-onepassword-native-messaging.js' | wc -l)" = 2
+check "second run still leaves one pref file" test "$(find "$tmp/ext" -name 'zz-onepassword-native-messaging.js' | wc -l)" = 1
 check "override is re-applied on every run" test "$(grep -c '^override' "$tmp/flatpak.log")" = 2
 
 if ((fails > 0)); then
