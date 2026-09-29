@@ -22,6 +22,7 @@ published as `ghcr.io/khowe085/bazzite-dx`. Layout follows the
 | Bazzite Portal selections | Cockpit, DisplayLink, virtualization, Framework fan control, HDMI 2.1 on AMD, sudo password asterisks, `/var/home` snapshots and deduplication, Steam icon cleanup, FSR4 on RDNA3, JetBrains Toolbox, LM Studio and Crunchyroll, switched on up front (see below) |
 | Claude Desktop | Anthropic's official Ubuntu build inside a distrobox named `ubuntu`, created at first login and exported to the menu (see below). The box also has the host's `gh`, `tea` and 1Password SSH agent and commit signing, and Lua 5.1 with LuaRocks, luacheck and busted |
 | SSH keys and Git signing | The system side of 1Password's SSH agent and commit signing setup; choosing the key stays in the app (see below) |
+| Task Manager TMOG | The Linux client's tar.gz from tmog.org/rtm (version 1.0.0, pinned by SHA-256), task manager only, without its XScreenSaver parts: `/usr/bin/tmog-task-manager`, with its icons and licence notices. It runs as root: the menu entry (System) and Ctrl+Shift+Esc start it through `pkexec`, with a polkit action for that program that asks for an admin's password at every launch (as root it can start any program through "Run new task", so a launch without one would hand out root). The shortcut is a default (`X-KDE-Shortcuts` in its menu entry, which `/usr/share/kglobalaccel` links to), so System Settings → Shortcuts can change it |
 
 The last build step, `build_files/90-verify.sh`, checks all of the above and fails the build otherwise.
 
@@ -321,7 +322,12 @@ docker run --rm -v "$PWD:/src:ro" bazzite-dx:local bash /src/tests/test-emudeck-
   assets, EmuDeck's assets predate GitHub's recorded digests, and Bazzite's own `ujust get-emudeck`
   verifies nothing either. Crunchyroll is checked against the SHA-256 GitHub records for the asset. `tea` is checked against a
   SHA-256 that Gitea serves from the same host as the binary, which catches a broken download but not a
-  compromised server; Gitea publishes no signature for it.
+  compromised server; Gitea publishes no signature for it. Task Manager TMOG publishes neither
+  checksum nor signature: its build step pins the SHA-256 of the 1.0.0 tar.gz as first downloaded,
+  so the same file uploaded again, or taken down, fails the build. Nothing notices a new release;
+  taking one means updating the version and hash in `build_files/75-tmog-task-manager.sh`.
+- Task Manager TMOG as root runs through Xwayland, because pkexec passes on the X11 display only, and
+  without your KDE theme, since root has no profile.
 - Claude Desktop in the distrobox has not been run on a real desktop yet. Anthropic supports Ubuntu
   22.04 and later and the box is Ubuntu 26.04, but the Electron sandbox inside a rootless container, the
   login hand-off from the browser, and Cowork (which needs QEMU/KVM inside the box) are untried.

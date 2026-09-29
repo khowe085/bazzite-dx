@@ -348,6 +348,32 @@ check "gh runs" gh --version
 check "tea installed" test -x /usr/bin/tea
 check "tea runs and reports a version" bash -c 'tea --version | grep -Eq "[0-9]+\.[0-9]+\.[0-9]+"'
 
+echo "== Task Manager TMOG"
+TMOG=/usr/bin/tmog-task-manager
+TMOG_DESKTOP=/usr/share/applications/com.tmog.taskmanager.desktop
+TMOG_ACTION=io.github.khowe085.bazzite-dx.tmog-task-manager
+TMOG_POLICY="/usr/share/polkit-1/actions/$TMOG_ACTION.policy"
+desktop_key() { kreadconfig6 --file "$TMOG_DESKTOP" --group 'Desktop Entry' --key "$1"; }
+policy_value() { xmllint --xpath "string(//action[@id='$TMOG_ACTION']/$1)" "$TMOG_POLICY"; }
+check "task manager installed" test -x "$TMOG"
+# It links the base's Qt 6 instead of bundling it, so a base update could leave it without a library.
+check "every library it links resolves in this image" bash -c "ldd $TMOG && ! ldd $TMOG | grep -q 'not found'"
+check "its icon is in the hicolor icon cache" grep -aq tmog-task-manager /usr/share/icons/hicolor/icon-theme.cache
+check "menu entry is valid" desktop-file-validate "$TMOG_DESKTOP"
+check "menu entry starts it as root through pkexec" test "$(desktop_key Exec)" = "pkexec $TMOG"
+check "Ctrl+Shift+Esc is its default shortcut" test "$(desktop_key X-KDE-Shortcuts)" = Ctrl+Shift+Esc
+check "kglobalacceld reads that entry" test "$(readlink -f /usr/share/kglobalaccel/com.tmog.taskmanager.desktop)" = "$TMOG_DESKTOP"
+check "no other application claims Ctrl+Shift+Esc" bash -c "! grep -rlsE '^X-KDE-Shortcuts=(.*,)?Ctrl\+Shift\+Esc(ape)?(,|$)' /usr/share/applications /usr/share/kglobalaccel | grep -vxF -e '$TMOG_DESKTOP' -e /usr/share/kglobalaccel/com.tmog.taskmanager.desktop"
+check "pkexec is setuid root" test "$(mode_of /usr/bin/pkexec)" = "4755 root:root"
+check "polkit action parses" xmllint --noout "$TMOG_POLICY"
+check "pkexec picks the action by the task manager's path" test "$(policy_value "annotate[@key='org.freedesktop.policykit.exec.path']")" = "$TMOG"
+check "and keeps the display, so it opens as a window" test "$(policy_value "annotate[@key='org.freedesktop.policykit.exec.allow_gui']")" = true
+# As root it can start programs ("Run new task"), so a launch without a password would be one for root.
+for who in allow_active allow_inactive allow_any; do
+	check "every launch asks for an admin's password ($who)" test "$(policy_value "defaults/$who")" = auth_admin
+done
+check "no polkit rule of its own changes that" bash -c "! grep -rlsF '$TMOG_ACTION' /etc/polkit-1/rules.d /usr/share/polkit-1/rules.d"
+
 echo "== dnf bookkeeping"
 check "no dnf usage counter or repo state under /var/lib/dnf" test ! -e /var/lib/dnf
 check "no dnf install history" bash -c '! ls /usr/lib/sysimage/libdnf5/transaction_history.sqlite* 2>/dev/null'

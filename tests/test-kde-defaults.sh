@@ -358,7 +358,11 @@ check "the top bar gives it a range from 40 to 100 degrees, not an automatic one
 check "then makes it a pie chart" test "$(sed -n 's/^hotspot\.writeConfig("\([^"]*\)".*/\1/p' "$tmp/hotspot.js" | tail -1)" = chartFace
 check "a pie chart" grep -Fqx 'hotspot.writeConfig("chartFace", "org.kde.ksysguard.piechart")' "$tmp/hotspot.js"
 check "the dock's widgets in order" test "$(widgets "$DOCK")" = "org.kde.plasma.kickoff org.kde.plasma.icontasks org.kde.plasma.marginsseparator org.kde.plasma.notifications"
-check "nothing is pinned to the dock" bash -c "! grep -q launchers '$DOCK'"
+# Without a launchers entry the task manager pins its built-in defaults (System Settings, Discover,
+# the file manager and the browser), so the template has to write an empty list.
+sed -n '/addWidget("org.kde.plasma.icontasks")/,/^$/p' "$DOCK" >"$tmp/tasks.js"
+check "nothing is pinned to the dock: its task manager gets an empty launcher list" bash -c "grep -Fqx 'var tasks = panel.addWidget(\"org.kde.plasma.icontasks\")' '$tmp/tasks.js' && grep -Fqx 'tasks.currentConfigGroup = [\"General\"]' '$tmp/tasks.js' && grep -Fqx 'tasks.writeConfig(\"launchers\", [])' '$tmp/tasks.js'"
+check "and nothing pins anything to it later in the template" test "$(grep -c 'writeConfig("launchers"' "$DOCK")" = 1
 check "no widget in the top bar is also shown inside its tray" bash -c "! sed -n '/\"extraItems\"/,/])/p' '$TOP' | grep -Eq 'plasma\.(volume|cameraindicator|networkmanagement|bluetooth|brightness|battery|notifications)\"'"
 
 echo "== Fedora Dark, the default global theme"
