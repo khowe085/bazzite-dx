@@ -7,8 +7,6 @@ ConditionPathExists=/usr/share/flatpak/preinstall.d
 
 [Service]
 Type=oneshot
-# Firefox beta lives on Flathub's beta remote; add it the way Bazzite's manager adds Flathub.
-ExecStartPre=/usr/bin/flatpak remote-add --system --if-not-exists flathub-beta /etc/flatpak/remotes.d/flathub-beta.flatpakrepo
 ExecStart=/usr/bin/flatpak preinstall --system -y
 
 [Install]
